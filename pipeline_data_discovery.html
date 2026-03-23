@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline — Data Discovery & Analytics | Auditable Internacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d0f;
+    --surface: #0f1417;
+    --surface2: #151b1f;
+    --surface3: #1c2428;
+    --border: #1f2d35;
+    --border-accent: #2a4050;
+    --text: #c8d8e0;
+    --text-dim: #5a7585;
+    --text-muted: #3a5060;
+    --accent: #00c8a0;
+    --accent2: #0090d0;
+    --accent3: #ff6b35;
+    --warn: #ffb830;
+    --danger: #ff4560;
+    --phase1: #00c8a0;
+    --phase2: #0090d0;
+    --phase3: #9b6bff;
+    --phase4: #ffb830;
+    --phase5: #ff6b35;
+    --phase6: #00d4ff;
+    --mono: 'IBM Plex Mono', monospace;
+    --serif: 'Fraunces', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINES */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,200,160,0.015) 2px,
+      rgba(0,200,160,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    position: sticky;
+    top: 0;
+    background: rgba(10,13,15,0.96);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 2px 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .header-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .header-standards {
+    display: flex;
+    gap: 8px;
+  }
+
+  .std-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+  }
+
+  .std-tag:hover {
+    color: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  /* HERO */
+  .hero {
+    padding: 80px 48px 64px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 52px;
+    font-weight: 300;
+    line-height: 1.1;
+    color: #e8f4f8;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: var(--text-dim);
+    max-width: 560px;
+    line-height: 1.8;
+    margin-bottom: 32px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .meta-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  /* GARTNER LADDER */
+  .gartner-ladder {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .ladder-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ladder-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ladder-level {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .ladder-level::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: transparent;
+    transition: all 0.25s;
+  }
+
+  .ladder-level:hover {
+    background: var(--surface2);
+    border-color: var(--border-accent);
+  }
+
+  .ladder-level.active::before { background: var(--accent); }
+  .ladder-level.active { background: var(--surface2); border-color: var(--border-accent); }
+
+  .level-num {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--border-accent);
+    min-width: 28px;
+    transition: color 0.25s;
+  }
+
+  .ladder-level:hover .level-num,
+  .ladder-level.active .level-num { color: var(--accent); }
+
+  .level-info {}
+
+  .level-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
+
+  .level-q {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* NAVIGATION TABS */
+  .phase-nav {
+    padding: 0 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    background: var(--surface);
+    position: sticky;
+    top: 56px;
+    z-index: 90;
+  }
+
+  .phase-nav::-webkit-scrollbar { height: 0; }
+
+  .phase-tab {
+    padding: 16px 24px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .phase-tab:hover { color: var(--text-dim); }
+
+  .phase-tab.active { color: var(--text); border-bottom-color: var(--tab-color); }
+
+  .phase-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tab-color);
+    flex-shrink: 0;
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    padding: 0 48px;
+  }
+
+  /* PHASE SECTIONS */
+  .phase-section {
+    display: none;
+    padding: 48px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.35s ease;
+  }
+
+  .phase-section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .phase-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .phase-number {
+    font-family: var(--serif);
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--phase-color);
+    opacity: 0.15;
+    line-height: 1;
+  }
+
+  .phase-title-block {}
+
+  .phase-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--phase-color);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .phase-title {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 300;
+    color: #e8f4f8;
+    margin-bottom: 12px;
+  }
+
+  .phase-subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 600px;
+    line-height: 1.7;
+  }
+
+  .phase-standards {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .std-pill {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 4px 10px;
+    border: 1px solid;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border-accent); }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    background: var(--surface3);
+    border: 1px solid var(--border-accent);
+    font-family: var(--mono);
+    color: var(--phase-color, var(--accent));
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .card-body {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* STEP LIST */
+  .step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border-left: 2px solid var(--border-accent);
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .step-item:hover {
+    background: var(--surface3);
+    border-left-color: var(--phase-color, var(--accent));
+  }
+
+  .step-n {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--phase-color, var(--accent));
+    min-width: 20px;
+    padding-top: 1px;
+  }
+
+  .step-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .step-text strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .code-desc {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .code-body {
+    padding: 20px;
+    overflow-x: auto;
+  }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre;
+  }
+
+  .c-comment { color: #3a6070; }
+  .c-kw { color: #0090d0; }
+  .c-fn { color: var(--accent); }
+  .c-str { color: #ffb830; }
+  .c-num { color: #9b6bff; }
+  .c-var { color: #c8d8e0; }
+  .c-import { color: #ff6b35; }
+
+  /* WARN / DANGER BLOCKS */
+  .alert {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border-left: 3px solid;
+    background: var(--surface);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .alert-warn { border-color: var(--warn); background: rgba(255,184,48,0.04); }
+  .alert-danger { border-color: var(--danger); background: rgba(255,69,96,0.04); }
+  .alert-info { border-color: var(--accent2); background: rgba(0,144,208,0.04); }
+  .alert-success { border-color: var(--accent); background: rgba(0,200,160,0.04); }
+
+  .alert-icon {
+    font-family: var(--mono);
+    font-size: 12px;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+
+  .alert-warn .alert-icon { color: var(--warn); }
+  .alert-danger .alert-icon { color: var(--danger); }
+  .alert-info .alert-icon { color: var(--accent2); }
+  .alert-success .alert-icon { color: var(--accent); }
+
+  .alert-content { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .alert-content strong { color: var(--text); font-weight: 500; }
+
+  /* DECISION TREE */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .dt-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dt-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dt-row:last-child { border-bottom: none; }
+
+  .dt-condition {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 6px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border-accent);
+  }
+
+  .dt-arrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .dt-action {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    border: 1px solid;
+    text-align: right;
+  }
+
+  .dt-action.ok { color: var(--accent); border-color: rgba(0,200,160,0.3); background: rgba(0,200,160,0.05); }
+  .dt-action.warn { color: var(--warn); border-color: rgba(255,184,48,0.3); background: rgba(255,184,48,0.05); }
+  .dt-action.danger { color: var(--danger); border-color: rgba(255,69,96,0.3); background: rgba(255,69,96,0.05); }
+  .dt-action.info { color: var(--accent2); border-color: rgba(0,144,208,0.3); background: rgba(0,144,208,0.05); }
+
+  /* QUALITY MATRIX */
+  .quality-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .qm-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+
+  .qm-cell:hover { border-color: var(--border-accent); background: var(--surface2); }
+
+  .qm-score {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+
+  .qm-dim {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .qm-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* DATASET EXAMPLES */
+  .dataset-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .dataset-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dataset-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--ds-color, var(--accent));
+    transform: scaleX(0);
+    transition: transform 0.25s;
+  }
+
+  .dataset-card:hover::after { transform: scaleX(1); }
+  .dataset-card:hover { border-color: var(--border-accent); }
+
+  .ds-sector {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ds-color, var(--accent));
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .ds-name {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 6px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .ds-vars {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .ds-challenges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .ds-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ANTI-PATTERNS */
+  .antipatterns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .ap-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+  }
+
+  .ap-x {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--danger);
+    flex-shrink: 0;
+  }
+
+  .ap-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .ap-text strong { color: var(--text); font-weight: 500; }
+
+  /* VERSION LOG */
+  .version-log {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .vl-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .vl-entry {
+    display: grid;
+    grid-template-columns: 140px 80px 100px 1fr;
+    gap: 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(31,45,53,0.5);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .vl-entry:last-child { border-bottom: none; }
+
+  .vl-version { color: var(--accent); }
+  .vl-tag { color: var(--text-muted); }
+  .vl-date { color: var(--text-muted); }
+  .vl-desc { color: var(--text-dim); }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: var(--phase-color, var(--accent));
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px 48px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .footer-left span { color: var(--accent); }
+
+  .footer-right {
+    display: flex;
+    gap: 16px;
+  }
+
+  .footer-right a {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+
+  .footer-right a:hover { color: var(--accent); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* MINI BADGE */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+
+  .badge-accent { color: var(--accent); border-color: rgba(0,200,160,0.4); }
+  .badge-warn { color: var(--warn); border-color: rgba(255,184,48,0.4); }
+  .badge-danger { color: var(--danger); border-color: rgba(255,69,96,0.4); }
+  .badge-info { color: var(--accent2); border-color: rgba(0,144,208,0.4); }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    .hero { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .dataset-grid { grid-template-columns: 1fr 1fr; }
+    .quality-matrix { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    header { padding: 0 20px; }
+    .hero { padding: 40px 20px; }
+    .main { padding: 0 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .dataset-grid { grid-template-columns: 1fr; }
+    .antipatterns { grid-template-columns: 1fr; }
+    .vl-entry { grid-template-columns: 1fr 1fr; }
+    footer { padding: 24px 20px; flex-direction: column; gap: 16px; }
+    .phase-nav { padding: 0 20px; }
+    .header-standards { display: none; }
+  }
+
+  /* PROGRESS INDICATOR */
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: visible;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--phase1), var(--phase2), var(--phase3), var(--phase4), var(--phase5), var(--phase6));
+    transition: width 0.4s ease;
+  }
+
+  /* INLINE HIGHLIGHT */
+  .hl { color: var(--accent); font-weight: 500; }
+  .hl-warn { color: var(--warn); }
+  .hl-danger { color: var(--danger); }
+  .hl-info { color: var(--accent2); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,200,160,0.08);
+    padding: 1px 5px;
+    border: 1px solid rgba(0,200,160,0.2);
+  }
+
+  /* TABLE */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+
+  .data-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-accent);
+    text-align: left;
+    background: var(--surface);
+  }
+
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+
+  .data-table tr:hover td { background: var(--surface); }
+
+  .data-table td:first-child { font-family: var(--mono); color: var(--text); }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-brand">
+    <span class="header-badge">Pipeline v3.0</span>
+    <span class="header-title">Data Discovery & Analytics — Auditable Internacional</span>
+  </div>
+  <div class="header-standards">
+    <span class="std-tag">CRISP-DM</span>
+    <span class="std-tag">ISO 25012</span>
+    <span class="std-tag">ITRB/GISTM</span>
+    <span class="std-tag">ISO 9001</span>
+    <span class="std-tag">WMO</span>
+    <span class="std-tag">ICOLD</span>
+    <span class="std-tag">FAO</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">Framework Metodológico Auditado Internacionalmente</div>
+    <h1>Pipeline <em>Implacable</em><br>para Data Discovery<br>y Analytics</h1>
+    <p class="hero-desc">
+      Protocolo de ejecución completo: desde la ingestión de datos hasta el despliegue de insights. 
+      Diseñado para ingeniería hídrica, gestión de presas e infraestructura crítica, 
+      pero aplicable a cualquier dominio técnico. Cada decisión analítica es trazable, 
+      justificada y reproducible.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Fases</span>
+        <span class="meta-value">6 + Deploy</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Marco</span>
+        <span class="meta-value">CRISP-DM + Gartner</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Estándares</span>
+        <span class="meta-value">7 normas</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Datasets</span>
+        <span class="meta-value">12 dominios</span>
+      </div>
+    </div>
+  </div>
+  <div class="gartner-ladder">
+    <div class="ladder-title">⬛ Escalera Analítica — Gartner Framework</div>
+    <div class="ladder-levels">
+      <div class="ladder-level active" onclick="setLadder(this)">
+        <div class="level-num">4</div>
+        <div class="level-info">
+          <div class="level-name">Prescriptiva</div>
+          <div class="level-q">¿Cómo hacerlo pasar?</div>
+        </div>
+      </div>
+      <div class="ladder-level" onclick="setLadder(this)">
+        <div class="level-num">3</div>
+        <div class="level-info">
+          <div class="level-name">Predictiva</div>
+          <div class="level-q">¿Qué pasará?</div>
+        </div>
+      </div>
+      <div class="ladder-level" onclick="setLadder(this)">
+        <div class="level-num">2</div>
+        <div class="level-info">
+          <div class="level-name">Diagnóstica</div>
+          <div class="level-q">¿Por qué pasó?</div>
+        </div>
+      </div>
+      <div class="ladder-level" onclick="setLadder(this)">
+        <div class="level-num">1</div>
+        <div class="level-info">
+          <div class="level-name">Descriptiva</div>
+          <div class="level-q">¿Qué pasó?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NAVIGATION -->
+<nav class="phase-nav">
+  <button class="phase-tab active" style="--tab-color:#00c8a0" onclick="showPhase('phase0',this)">
+    <span class="phase-dot"></span>0 · Definición
+  </button>
+  <button class="phase-tab" style="--tab-color:#0090d0" onclick="showPhase('phase1',this)">
+    <span class="phase-dot"></span>1 · EDA
+  </button>
+  <button class="phase-tab" style="--tab-color:#9b6bff" onclick="showPhase('phase2',this)">
+    <span class="phase-dot"></span>2 · Missingness
+  </button>
+  <button class="phase-tab" style="--tab-color:#ff6b35" onclick="showPhase('phase3',this)">
+    <span class="phase-dot"></span>3 · Outliers
+  </button>
+  <button class="phase-tab" style="--tab-color:#ffb830" onclick="showPhase('phase4',this)">
+    <span class="phase-dot"></span>4 · Calidad ISO 25012
+  </button>
+  <button class="phase-tab" style="--tab-color:#00d4ff" onclick="showPhase('phase5',this)">
+    <span class="phase-dot"></span>5 · Feature Eng.
+  </button>
+  <button class="phase-tab" style="--tab-color:#ff4560" onclick="showPhase('phase6',this)">
+    <span class="phase-dot"></span>6 · Deploy & Gov.
+  </button>
+  <button class="phase-tab" style="--tab-color:#c8d8e0" onclick="showPhase('phaseX',this)">
+    <span class="phase-dot"></span>Anti-Patrones
+  </button>
+  <button class="phase-tab" style="--tab-color:#5a7585" onclick="showPhase('phaseDS',this)">
+    <span class="phase-dot"></span>Datasets
+  </button>
+</nav>
+
+<main class="main">
+
+<!-- ═══ FASE 0 ═══ -->
+<section id="phase0" class="phase-section active" style="--phase-color:#00c8a0">
+
+  <div class="phase-header">
+    <div class="phase-number">0</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase Cero — Obligatoria</div>
+      <div class="phase-title">Definición del Problema & Entendimiento del Negocio</div>
+      <div class="phase-subtitle">
+        No existe Pipeline sin esta fase completada. Aquí se define el nivel Gartner objetivo, 
+        las fuentes de datos, los KPIs, los criterios de calidad mínimos y el equipo responsable. 
+        Todo lo posterior es inútil si esta fase falla.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#00c8a0; border-color:rgba(0,200,160,0.4)">CRISP-DM</span>
+      <span class="std-pill" style="color:#0090d0; border-color:rgba(0,144,208,0.4)">ISO 9001</span>
+    </div>
+  </div>
+
+  <div class="section-title">Protocolo de Definición</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:var(--accent)">01</div>
+        <div class="card-title">Pregunta Analítica Central</div>
+      </div>
+      <div class="card-body">
+        Traducir la necesidad de negocio a una pregunta SMART: Específica, Medible, Alcanzable, Relevante, Temporal.
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Definir el nivel Gartner objetivo</strong> antes de comenzar. No ejecutar N+1 sin completar N.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Documentar hipótesis</strong> del equipo técnico y de negocio por separado para evitar confirmation bias.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Establecer KPIs</strong> de éxito del análisis antes de ver los datos (pre-registro analítico).</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Definir criterio de fallo</strong>: ¿Qué resultado obligaría a detener el análisis y reportar al responsable?</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:var(--accent)">02</div>
+        <div class="card-title">Inventario de Fuentes</div>
+      </div>
+      <div class="card-body">
+        Catalogar todas las fuentes antes de ingestar una sola fila de datos.
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">INT</span><span class="step-text"><strong>Internas:</strong> SQL/NoSQL, ERPs, SCADA, sensores, piezómetros, inclinómetros, aforadores.</span></div>
+          <div class="step-item"><span class="step-n">EXT</span><span class="step-text"><strong>Externas:</strong> APIs (verificar rate-limit y SLA), Open Datasets (Kaggle, SENAMHI, ANA), scraping ético (<code>robots.txt</code>).</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Metadata Discovery:</strong> frecuencia de actualización, propietario, historial de versiones, fecha de inicio de registro.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Encoding:</strong> verificar <code>UTF-8</code>; documentar excepciones. Delimitar correctamente tabulados y CSVs.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Encabezado Obligatorio de Script</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Encabezado Estándar</span>
+      <span class="code-desc">Obligatorio · Reproducibilidad · Auditoría</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-comment"># ═══════════════════════════════════════════════════════════════
+# PROYECTO   : Monitoreo de Seguridad — Presa La Esperanza
+# FASE       : 0 — Definición del Problema
+# AUTOR      : [Nombre · Matrícula · Organización]
+# FECHA      : 2025-01-15
+# VERSIÓN    : v01.0.0
+# METODOLOGÍA: CRISP-DM + ISO 25012 + GISTM
+# AUDITABILIDAD: ITRB, ICOLD B.158, WMO-No.8
+# ═══════════════════════════════════════════════════════════════</span>
+
+<span class="c-import">import</span> pandas <span class="c-kw">as</span> pd
+<span class="c-import">import</span> numpy <span class="c-kw">as</span> np
+<span class="c-import">import</span> os, datetime, json, hashlib
+
+<span class="c-comment"># Semilla global fija — reproducibilidad total</span>
+<span class="c-var">RANDOM_STATE</span> = <span class="c-num">42</span>
+np.random.seed(<span class="c-var">RANDOM_STATE</span>)
+
+<span class="c-comment"># Registro de transformaciones — auditoría completa</span>
+<span class="c-var">transformation_log</span> = []
+
+<span class="c-kw">def</span> <span class="c-fn">log_transform</span>(step: str, description: str, before_shape: tuple, after_shape: tuple, method: str):
+    <span class="c-str">"""Registra cada transformación para trazabilidad total bajo ISO 9001."""</span>
+    <span class="c-var">transformation_log</span>.append({
+        <span class="c-str">"timestamp"</span>: datetime.datetime.now().isoformat(),
+        <span class="c-str">"step"</span>: step,
+        <span class="c-str">"description"</span>: description,
+        <span class="c-str">"before_shape"</span>: before_shape,
+        <span class="c-str">"after_shape"</span>: after_shape,
+        <span class="c-str">"method"</span>: method,
+        <span class="c-str">"delta_rows"</span>: after_shape[<span class="c-num">0</span>] - before_shape[<span class="c-num">0</span>]
+    })
+
+<span class="c-comment"># Hash del dataset raw → garantiza integridad del origen</span>
+<span class="c-kw">def</span> <span class="c-fn">hash_dataset</span>(filepath: str) -> str:
+    <span class="c-kw">with</span> open(filepath, <span class="c-str">'rb'</span>) <span class="c-kw">as</span> f:
+        <span class="c-kw">return</span> hashlib.sha256(f.read()).hexdigest()[:16]</pre>
+    </div>
+  </div>
+
+  <div class="section-title">Versionado de Datasets</div>
+
+  <div class="version-log">
+    <div class="vl-title">Log de Versiones — Convención Obligatoria</div>
+    <div class="vl-entry">
+      <span class="vl-version">df_v01_raw</span>
+      <span class="vl-tag">RAW</span>
+      <span class="vl-date">2025-01-15</span>
+      <span class="vl-desc">Dataset original sin ninguna modificación. Hash verificado. Inmutable.</span>
+    </div>
+    <div class="vl-entry">
+      <span class="vl-version">df_v02_clean</span>
+      <span class="vl-tag">CLEAN</span>
+      <span class="vl-date">2025-01-16</span>
+      <span class="vl-desc">Post-tratamiento de duplicados, nulos y formatos. Cada cambio en transformation_log.</span>
+    </div>
+    <div class="vl-entry">
+      <span class="vl-version">df_v03_features</span>
+      <span class="vl-tag">FEAT</span>
+      <span class="vl-date">2025-01-17</span>
+      <span class="vl-desc">Post-feature engineering. Variables derivadas documentadas con justificación de dominio.</span>
+    </div>
+    <div class="vl-entry">
+      <span class="vl-version">df_v04_train</span>
+      <span class="vl-tag">TRAIN</span>
+      <span class="vl-date">2025-01-17</span>
+      <span class="vl-desc">Set de entrenamiento. Split estratificado post-limpieza. Sin data leakage.</span>
+    </div>
+    <div class="vl-entry">
+      <span class="vl-version">df_v04_test</span>
+      <span class="vl-tag">TEST</span>
+      <span class="vl-date">2025-01-17</span>
+      <span class="vl-desc">Set de prueba. Separado antes de cualquier transformación. Solo transform(), nunca fit().</span>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FASE 1 ═══ -->
+<section id="phase1" class="phase-section" style="--phase-color:#0090d0">
+
+  <div class="phase-header">
+    <div class="phase-number">1</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase 1 — Exploración</div>
+      <div class="phase-title">Análisis Exploratorio de Datos (EDA)</div>
+      <div class="phase-subtitle">
+        El EDA no es un paso opcional ni decorativo. Es el único mecanismo para 
+        comprender qué tienen los datos antes de tomar cualquier decisión. 
+        Ejecutar en orden estricto: Inicial → Univariado → Multivariado.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#0090d0; border-color:rgba(0,144,208,0.4)">ISO 25012</span>
+      <span class="std-pill" style="color:#00c8a0; border-color:rgba(0,200,160,0.4)">WMO-No.8</span>
+    </div>
+  </div>
+
+  <div class="section-title">A · Exploración Inicial — Estructura y Metadatos</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — EDA Inicial</span>
+      <span class="code-desc">Obligatorio antes de cualquier transformación</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-comment"># ─────────────────────────────────────────────────────────────
+# A.1 ESTRUCTURA Y METADATOS
+# Ref: ISO 25012 §6.1 — Completitud; WMO-No.8 §3.2
+# ─────────────────────────────────────────────────────────────</span>
+
+<span class="c-var">df_v01_raw</span> = pd.read_csv(
+    <span class="c-str">'datos_piezometros_2020_2024.csv'</span>,
+    parse_dates=[<span class="c-str">'fecha'</span>],
+    index_col=<span class="c-str">'fecha'</span>,
+    encoding=<span class="c-str">'utf-8'</span>,
+    dtype_backend=<span class="c-str">'numpy_nullable'</span>  <span class="c-comment"># Pandas 2.0 — mantiene tipos con nulos</span>
+)
+
+<span class="c-comment"># Metadatos fundamentales</span>
+print(<span class="c-str">f"Forma        : {df_v01_raw.shape}"</span>)
+print(<span class="c-str">f"Período      : {df_v01_raw.index.min()} → {df_v01_raw.index.max()}"</span>)
+print(<span class="c-str">f"Frecuencia   : {pd.infer_freq(df_v01_raw.index)}"</span>)
+print(<span class="c-str">f"Hash dataset : {hash_dataset('datos_piezometros_2020_2024.csv')}"</span>)
+
+<span class="c-comment"># Tipos de datos — verificar que coincidan con lo esperado del negocio</span>
+print(df_v01_raw.dtypes)
+
+<span class="c-comment"># Duplicados — decisión documentada antes de actuar</span>
+<span class="c-var">n_duplicados</span> = df_v01_raw.duplicated().sum()
+print(<span class="c-str">f"Duplicados   : {n_duplicados} ({n_duplicados/len(df_v01_raw)*100:.2f}%)"</span>)
+
+<span class="c-comment"># Cardinalidad por variable</span>
+print(df_v01_raw.nunique().sort_values())</pre>
+    </div>
+  </div>
+
+  <div class="section-title">B · Análisis Univariado</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#0090d0">B1</div>
+        <div class="card-title">Estadísticos Clave</div>
+      </div>
+      <div class="card-body">
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">μ/σ</span><span class="step-text"><strong>Media, Mediana, Moda, Desv. Estándar</strong> — Siempre comparar μ vs mediana. Diferencia >15% indica sesgo relevante.</span></div>
+          <div class="step-item"><span class="step-n">CV</span><span class="step-text"><strong>Coeficiente de Variación</strong> = σ/μ. Útil para comparar dispersión entre variables de distinta escala.</span></div>
+          <div class="step-item"><span class="step-n">IQR</span><span class="step-text"><strong>Rango Intercuartílico</strong> — Resistente a outliers. Base del método Tukey para detección.</span></div>
+          <div class="step-item"><span class="step-n">γ1</span><span class="step-text"><strong>Skewness</strong>: |γ1|>1 = sesgo fuerte, evaluar transformación Log/Box-Cox. |γ1|>2 = transformación obligatoria.</span></div>
+          <div class="step-item"><span class="step-n">γ2</span><span class="step-text"><strong>Curtosis</strong>: >3 = colas pesadas (riesgo de extremos). Común en caudales máximos y datos sísmicos.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#0090d0">B2</div>
+        <div class="card-title">Pruebas de Normalidad — Nunca Asumir</div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <tr><th>Prueba</th><th>Cuándo usar</th><th>Límite n</th></tr>
+          <tr><td>Shapiro-Wilk</td><td>Primera elección general</td><td>n &lt; 5000</td></tr>
+          <tr><td>Anderson-Darling</td><td>Hidrología, series largas</td><td>n &lt; 25000</td></tr>
+          <tr><td>Kolmogorov-Smirnov</td><td>Comparar distribuciones</td><td>Cualquier n</td></tr>
+          <tr><td>Q-Q Plot</td><td>Visual complementaria</td><td>Cualquier n</td></tr>
+        </table>
+        <div class="alert alert-warn" style="margin-top:12px; margin-bottom:0">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-content"><strong>Anti-patrón:</strong> Para n &gt; 5000, Shapiro-Wilk rechazará normalidad casi siempre por potencia estadística. Usar Anderson-Darling + inspección visual del Q-Q plot.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">C · Análisis Multivariado</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Multivariado Completo</span>
+      <span class="code-desc">Correlaciones + Heatmap + Series Temporales</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-import">import</span> scipy.stats <span class="c-kw">as</span> stats
+<span class="c-import">import</span> seaborn <span class="c-kw">as</span> sns
+<span class="c-import">import</span> matplotlib.pyplot <span class="c-kw">as</span> plt
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# C.1 SELECCIÓN DE MÉTODO DE CORRELACIÓN — No hardcodear Pearson
+# Pearson   : datos normales, relación lineal
+# Spearman  : datos sesgados (caudales, precipitación), rangos
+# Kendall-τ : n pequeño o muchos empates
+# ─────────────────────────────────────────────────────────────</span>
+
+<span class="c-kw">def</span> <span class="c-fn">seleccionar_correlacion</span>(col, alpha=<span class="c-num">0.05</span>) -> str:
+    <span class="c-str">"""Selección automática con justificación estadística."""</span>
+    stat, p = stats.shapiro(col.dropna())
+    <span class="c-kw">return</span> <span class="c-str">'pearson'</span> <span class="c-kw">if</span> p > alpha <span class="c-kw">else</span> <span class="c-str">'spearman'</span>
+
+<span class="c-comment"># Correlaciones con método apropiado por variable</span>
+<span class="c-var">corr_method</span> = seleccionar_correlacion(df_v01_raw[<span class="c-str">'caudal_m3s'</span>])
+<span class="c-var">matriz_corr</span> = df_v01_raw.corr(method=corr_method, numeric_only=<span class="c-kw">True</span>)
+
+<span class="c-comment"># FLAG automático: correlaciones > 0.85 (multicolinealidad)</span>
+<span class="c-var">alta_corr</span> = [(c1, c2, round(<span class="c-var">matriz_corr</span>.loc[c1, c2], <span class="c-num">3</span>))
+             <span class="c-kw">for</span> i, c1 <span class="c-kw">in</span> enumerate(<span class="c-var">matriz_corr</span>.columns)
+             <span class="c-kw">for</span> c2 <span class="c-kw">in</span> <span class="c-var">matriz_corr</span>.columns[i+<span class="c-num">1</span>:]
+             <span class="c-kw">if</span> abs(<span class="c-var">matriz_corr</span>.loc[c1, c2]) > <span class="c-num">0.85</span>]
+
+<span class="c-kw">if</span> alta_corr:
+    print(<span class="c-str">f"⚠ MULTICOLINEALIDAD DETECTADA: {alta_corr}"</span>)
+    log_transform(<span class="c-str">"EDA-MULTICOLINEAL"</span>, str(alta_corr), df_v01_raw.shape, df_v01_raw.shape, <span class="c-str">"Pearson/Spearman"</span>)
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# C.2 SERIES TEMPORALES — Estacionalidad y Tendencia (STL)
+# Ref: WMO-No.8 §3.4 — Homogeneity of climatological data
+# ─────────────────────────────────────────────────────────────</span>
+<span class="c-import">from</span> statsmodels.tsa.seasonal <span class="c-import">import</span> STL
+
+<span class="c-var">stl_result</span> = STL(df_v01_raw[<span class="c-str">'nivel_piezometrico'</span>].dropna(), period=<span class="c-num">365</span>).fit()
+<span class="c-comment"># Examinar: stl_result.trend, stl_result.seasonal, stl_result.resid</span></pre>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FASE 2 ═══ -->
+<section id="phase2" class="phase-section" style="--phase-color:#9b6bff">
+
+  <div class="phase-header">
+    <div class="phase-number">2</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase 2 — Integridad</div>
+      <div class="phase-title">Missingness — Gestión de Datos Faltantes</div>
+      <div class="phase-subtitle">
+        El mecanismo de ausencia determina el tratamiento. Imputar sin diagnosticar 
+        es el error más común y el más dañino. En datos de seguridad crítica, 
+        el patrón de ausencia puede ser la señal más valiosa del dataset.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#9b6bff; border-color:rgba(155,107,255,0.4)">ITRB</span>
+      <span class="std-pill" style="color:#9b6bff; border-color:rgba(155,107,255,0.4)">GISTM</span>
+      <span class="std-pill" style="color:#0090d0; border-color:rgba(0,144,208,0.4)">ISO 25012</span>
+    </div>
+  </div>
+
+  <div class="alert alert-danger">
+    <span class="alert-icon">⛔</span>
+    <div class="alert-content">
+      <strong>ITRB/GISTM — Instrucción Crítica:</strong> En datos de seguridad de presas 
+      (piezómetros, inclinómetros, aforadores de filtración, extensómetros), los valores MNAR 
+      NUNCA se imputan con estadísticos simples (media, mediana). El patrón sistemático de 
+      ausencia ES la señal de alerta. Conservar + crear indicador binario + escalar al ingeniero responsable.
+    </div>
+  </div>
+
+  <div class="section-title">Clasificación de Mecanismos — Diagnóstico Obligatorio</div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#00c8a0">MCAR</div>
+        <div class="card-title">Completamente al Azar</div>
+      </div>
+      <div class="card-body">
+        La ausencia no depende de ninguna variable observable ni del valor faltante mismo.
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Escenario ideal: no introduce sesgo sistémico</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Verificar con prueba Little's MCAR (scipy/statsmodels)</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Si % &lt; 5%: eliminación de filas válida</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Si 5-15%: imputación simple justificada</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Si &gt;15%: revisar calidad del sensor/proceso</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#ffb830">MAR</div>
+        <div class="card-title">Al Azar Condicionado</div>
+      </div>
+      <div class="card-body">
+        La ausencia depende de variables observables en el dataset.
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Verificar con regresión logística: ¿predice la máscara de missingness?</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Imputación condicionada es válida si el modelo de imputación es correcto</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">Series temporales cortas: interpolación lineal o spline cúbico</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">MAR multivariado complejo: MICE (Multiple Imputation by Chained Equations)</span></div>
+          <div class="step-item"><span class="step-n">↓</span><span class="step-text">MAR con predictores fuertes: KNN (k=5, Robust Scaler previo)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#ff4560">MNAR</div>
+        <div class="card-title">No Aleatorio — RIESGO ALTO</div>
+      </div>
+      <div class="card-body">
+        La ausencia depende del propio valor faltante. El más peligroso.
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">⚠</span><span class="step-text">No existe prueba estadística definitiva para MNAR — requiere análisis de dominio</span></div>
+          <div class="step-item"><span class="step-n">⚠</span><span class="step-text">Crear indicador binario: <code>flag_missing_sensor_X = 1</code></span></div>
+          <div class="step-item"><span class="step-n">⚠</span><span class="step-text">Documentar contexto operacional del período de ausencia</span></div>
+          <div class="step-item"><span class="step-n">⛔</span><span class="step-text">En datos de seguridad: ESCALAR INMEDIATAMENTE al ingeniero responsable</span></div>
+          <div class="step-item"><span class="step-n">⛔</span><span class="step-text">Nunca imputar sin aprobación del responsable del monitoreo</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Protocolo de Tratamiento con Código</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Missingness Completo</span>
+      <span class="code-desc">Diagnóstico → Visualización → Tratamiento → Log</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-import">import</span> missingno <span class="c-kw">as</span> msno
+<span class="c-import">from</span> sklearn.impute <span class="c-import">import</span> KNNImputer
+<span class="c-import">from</span> sklearn.experimental <span class="c-import">import</span> enable_iterative_imputer  <span class="c-comment"># MICE</span>
+<span class="c-import">from</span> sklearn.impute <span class="c-import">import</span> IterativeImputer
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# PASO 1: CUANTIFICAR — Antes de ver patrones
+# ─────────────────────────────────────────────────────────────</span>
+<span class="c-var">missing_report</span> = pd.DataFrame({
+    <span class="c-str">'count'</span>: df_v01_raw.isna().sum(),
+    <span class="c-str">'pct'</span>: (df_v01_raw.isna().sum() / len(df_v01_raw) * <span class="c-num">100</span>).round(<span class="c-num">2</span>),
+    <span class="c-str">'dtype'</span>: df_v01_raw.dtypes
+}).sort_values(<span class="c-str">'pct'</span>, ascending=<span class="c-kw">False</span>)
+print(missing_report[missing_report[<span class="c-str">'pct'</span>] > <span class="c-num">0</span>])
+
+<span class="c-comment"># PASO 2: VISUALIZAR — Patrones espaciales y temporales</span>
+fig, axes = plt.subplots(<span class="c-num">1</span>, <span class="c-num">3</span>, figsize=(<span class="c-num">18</span>, <span class="c-num">5</span>))
+msno.matrix(df_v01_raw, ax=axes[<span class="c-num">0</span>])    <span class="c-comment"># Patrón espacial — ¿gaps sistemáticos?</span>
+msno.heatmap(df_v01_raw, ax=axes[<span class="c-num">1</span>])   <span class="c-comment"># Correlación entre ausencias</span>
+msno.dendrogram(df_v01_raw, ax=axes[<span class="c-num">2</span>]) <span class="c-comment"># Clusters de co-ausencia → detecta MNAR</span>
+
+<span class="c-comment"># PASO 3: INDICADORES BINARIOS — ANTES de cualquier imputación</span>
+<span class="c-kw">for</span> col <span class="c-kw">in</span> [<span class="c-str">'presion_piezometrica'</span>, <span class="c-str">'deformacion_mm'</span>, <span class="c-str">'caudal_filtracion'</span>]:
+    <span class="c-kw">if</span> df_v01_raw[col].isna().any():
+        df_v01_raw[<span class="c-str">f'flag_miss_{col}'</span>] = df_v01_raw[col].isna().astype(int)
+        log_transform(<span class="c-str">f"FLAG-MISS-{col}"</span>, <span class="c-str">"Indicador binario de missingness"</span>,
+                      df_v01_raw.shape, df_v01_raw.shape, <span class="c-str">"binary_indicator"</span>)
+
+<span class="c-comment"># PASO 4A: IMPUTACIÓN — Solo tras diagnóstico MAR + autorización</span>
+<span class="c-var">shape_pre</span> = df_v01_raw.shape
+
+<span class="c-comment"># Series temporales: interpolación temporal (gaps &lt; 72h para datos horarios)</span>
+<span class="c-var">cols_temporales</span> = [<span class="c-str">'temperatura_agua'</span>, <span class="c-str">'nivel_embalse'</span>]
+df_v01_raw[<span class="c-var">cols_temporales</span>] = df_v01_raw[<span class="c-var">cols_temporales</span>].interpolate(
+    method=<span class="c-str">'time'</span>,  <span class="c-comment"># Respeta irregularidad temporal</span>
+    limit=<span class="c-num">72</span>,       <span class="c-comment"># Límite de interpolación: 72 períodos máx.</span>
+    limit_direction=<span class="c-str">'both'</span>
+)
+
+<span class="c-comment"># MICE para MAR multivariado (preserva correlaciones entre variables)</span>
+<span class="c-var">mice_imputer</span> = IterativeImputer(
+    max_iter=<span class="c-num">10</span>,
+    random_state=<span class="c-var">RANDOM_STATE</span>,
+    initial_strategy=<span class="c-str">'median'</span>  <span class="c-comment"># Mediana por robustez</span>
+)
+log_transform(<span class="c-str">"IMPUTE-MICE"</span>, <span class="c-str">"MICE MAR multivariado"</span>, <span class="c-var">shape_pre</span>, df_v01_raw.shape, <span class="c-str">"MICE-IterativeImputer"</span>)</pre>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FASE 3 ═══ -->
+<section id="phase3" class="phase-section" style="--phase-color:#ff6b35">
+
+  <div class="phase-header">
+    <div class="phase-number">3</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase 3 — Robustez</div>
+      <div class="phase-title">Outliers — Detección y Tratamiento</div>
+      <div class="phase-subtitle">
+        Un outlier puede ser el error más grave del dataset o la señal más valiosa. 
+        La naturaleza del atípico determina su tratamiento. 
+        Eliminar sin análisis es tan peligroso como ignorarlo.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#ff6b35; border-color:rgba(255,107,53,0.4)">ICOLD B.158</span>
+      <span class="std-pill" style="color:#ff6b35; border-color:rgba(255,107,53,0.4)">GISTM §7</span>
+    </div>
+  </div>
+
+  <div class="section-title">Árbol de Decisión — Tratamiento de Outliers</div>
+
+  <div class="decision-tree">
+    <div class="dt-title">⬛ Árbol de Decisión — Aplicar en orden estricto</div>
+    <div class="dt-row">
+      <div class="dt-condition">¿Error de digitación o falla de instrumento verificable con log técnico?</div>
+      <div class="dt-arrow">→</div>
+      <div class="dt-action ok">CORREGIR o ELIMINAR + entrada en transformation_log</div>
+    </div>
+    <div class="dt-row">
+      <div class="dt-condition">¿Evento real extremo documentado? (avenida extraordinaria, sismo, vaciado de embalse)</div>
+      <div class="dt-arrow">→</div>
+      <div class="dt-action info">CONSERVAR + etiquetar flag_evento_extremo=1</div>
+    </div>
+    <div class="dt-row">
+      <div class="dt-condition">¿Anomalía de seguridad? (piezómetro supera umbral, deformación acelerada)</div>
+      <div class="dt-arrow">→</div>
+      <div class="dt-action danger">CONSERVAR + ESCALAR INMEDIATAMENTE + nota técnica formal</div>
+    </div>
+    <div class="dt-row">
+      <div class="dt-condition">¿Causa indeterminada después de consulta al equipo de campo?</div>
+      <div class="dt-arrow">→</div>
+      <div class="dt-action warn">CONSERVAR + crear flag_outlier_indeterminado=1 + investigar</div>
+    </div>
+  </div>
+
+  <div class="section-title">Métodos de Detección — Selección Justificada</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#ff6b35">UNI</div>
+        <div class="card-title">Detección Univariada</div>
+      </div>
+      <div class="card-body">
+        <table class="data-table" style="margin-bottom:0">
+          <tr><th>Método</th><th>Cuándo</th><th>Umbral</th></tr>
+          <tr><td>Z-Score</td><td>Solo si normalidad confirmada</td><td>|z| > 3</td></tr>
+          <tr><td>IQR Tukey</td><td>No requiere normalidad</td><td>1.5×IQR</td></tr>
+          <tr><td>Modified Z (MAD)</td><td>Hidrología, sesgo</td><td>|xi-med|/MAD > 3.5</td></tr>
+          <tr><td>Percentil</td><td>Rangos físicos conocidos</td><td>P0.1 / P99.9</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#ff6b35">MUL</div>
+        <div class="card-title">Detección Multivariada</div>
+      </div>
+      <div class="card-body">
+        <table class="data-table" style="margin-bottom:0">
+          <tr><th>Método</th><th>Contexto</th></tr>
+          <tr><td>Distancia Mahalanobis</td><td>Considera correlación entre variables — instrumentación</td></tr>
+          <tr><td>Isolation Forest</td><td>Dataset grande, alta dimensionalidad</td></tr>
+          <tr><td>LOF (Local Outlier Factor)</td><td>Outliers contextuales en clusters</td></tr>
+          <tr><td>DBSCAN</td><td>Basado en densidad, sin asumir forma</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Detección Robusta de Outliers</span>
+      <span class="code-desc">MAD + Isolation Forest + Flag automático</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-import">from</span> sklearn.ensemble <span class="c-import">import</span> IsolationForest
+<span class="c-import">from</span> scipy.spatial.distance <span class="c-import">import</span> mahalanobis
+<span class="c-import">from</span> scipy.stats <span class="c-import">import</span> median_abs_deviation
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# MÉTODO 1: Modified Z-Score (MAD) — PREFERIDO para hidrología
+# Ref: Iglewicz & Hoaglin (1993) — ASTM E178
+# MAD es resistente a la influencia de los propios outliers
+# ─────────────────────────────────────────────────────────────</span>
+
+<span class="c-kw">def</span> <span class="c-fn">detectar_outliers_mad</span>(serie: pd.Series, threshold=<span class="c-num">3.5</span>) -> pd.Series:
+    <span class="c-str">"""Modified Z-Score — no requiere normalidad, robusto para caudales."""</span>
+    <span class="c-var">mad</span> = median_abs_deviation(serie.dropna(), scale=<span class="c-str">'normal'</span>)
+    <span class="c-kw">if</span> mad == <span class="c-num">0</span>: <span class="c-kw">return</span> pd.Series(<span class="c-kw">False</span>, index=serie.index)
+    <span class="c-var">modified_z</span> = <span class="c-num">0.6745</span> * (serie - serie.median()) / mad
+    <span class="c-kw">return</span> abs(<span class="c-var">modified_z</span>) > threshold
+
+<span class="c-comment"># Aplicar a variable crítica</span>
+<span class="c-var">mask_mad</span> = detectar_outliers_mad(df_v01_raw[<span class="c-str">'caudal_filtracion_ls'</span>])
+df_v01_raw[<span class="c-str">'flag_outlier_mad'</span>] = mask_mad.astype(int)
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# MÉTODO 2: Isolation Forest — Dataset multivariado de sensores
+# contamination: estimado previo de % esperado de anomalías
+# ─────────────────────────────────────────────────────────────</span>
+<span class="c-var">sensor_cols</span> = [<span class="c-str">'presion_piezometrica'</span>, <span class="c-str">'deformacion_mm'</span>, <span class="c-str">'caudal_filtracion_ls'</span>]
+<span class="c-var">df_sensores</span> = df_v01_raw[<span class="c-var">sensor_cols</span>].dropna()
+
+<span class="c-var">iso_forest</span> = IsolationForest(
+    contamination=<span class="c-num">0.02</span>,   <span class="c-comment"># 2% esperado — ajustar al dominio</span>
+    random_state=<span class="c-var">RANDOM_STATE</span>,
+    n_estimators=<span class="c-num">200</span>
+)
+<span class="c-var">outlier_pred</span> = iso_forest.fit_predict(<span class="c-var">df_sensores</span>)
+<span class="c-comment"># -1 = outlier, 1 = normal</span>
+df_v01_raw.loc[<span class="c-var">df_sensores</span>.index, <span class="c-str">'flag_iso_forest'</span>] = (<span class="c-var">outlier_pred</span> == -<span class="c-num">1</span>).astype(int)
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# SEÑALES CRÍTICAS DE SEGURIDAD — Detección por reglas de dominio
+# Ref: GISTM §7.4, ICOLD B.158 §4.3
+# ─────────────────────────────────────────────────────────────</span>
+<span class="c-var">UMBRAL_ALERTA_PIEZO</span> = <span class="c-num">85.5</span>   <span class="c-comment"># msnm — definido en plan de instrumentación</span>
+<span class="c-var">UMBRAL_ALERTA_FILTRAC</span> = <span class="c-num">12.0</span>  <span class="c-comment"># l/s — incremento > 20% sobre media móvil 30d</span>
+
+<span class="c-var">alerta_piezo</span> = df_v01_raw[<span class="c-str">'presion_piezometrica'</span>] > <span class="c-var">UMBRAL_ALERTA_PIEZO</span>
+<span class="c-kw">if</span> <span class="c-var">alerta_piezo</span>.any():
+    print(<span class="c-str">f"🚨 ALERTA: {alerta_piezo.sum()} registros superan umbral piezométrico"</span>)
+    <span class="c-comment"># Escalar inmediatamente al ingeniero responsable</span></pre>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠</span>
+    <div class="alert-content">
+      <strong>Anti-patrón crítico:</strong> Usar Z-Score en caudales o precipitación 
+      (distribuciones log-normales o gamma) producirá falsos positivos en la cola derecha 
+      y perderá outliers en la cola izquierda. El Modified Z-Score basado en MAD es 
+      el método preferido para cualquier variable hidrológica.
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FASE 4 ═══ -->
+<section id="phase4" class="phase-section" style="--phase-color:#ffb830">
+
+  <div class="phase-header">
+    <div class="phase-number">4</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase 4 — Certificación</div>
+      <div class="phase-title">Calidad de Datos — 6 Dimensiones ISO 25012</div>
+      <div class="phase-subtitle">
+        La calidad no es un estado binario, es un score auditable. 
+        Cada dimensión debe ser cuantificada, reportada y sujeta a un plan de mejora 
+        con responsable, plazo y métrica de seguimiento.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#ffb830; border-color:rgba(255,184,48,0.4)">ISO 25012</span>
+      <span class="std-pill" style="color:#ffb830; border-color:rgba(255,184,48,0.4)">ISO 9001</span>
+      <span class="std-pill" style="color:#ffb830; border-color:rgba(255,184,48,0.4)">FAO</span>
+    </div>
+  </div>
+
+  <div class="section-title">Score por Dimensión — Entregable Auditable</div>
+
+  <div class="quality-matrix">
+    <div class="qm-cell">
+      <div class="qm-score" style="color:#00c8a0">ACC</div>
+      <div class="qm-dim">Exactitud (Accuracy)</div>
+      <div class="qm-desc">¿Los datos representan correctamente el fenómeno real? Validar contra sensores redundantes, registros físicos, datos de terceros.</div>
+    </div>
+    <div class="qm-cell">
+      <div class="qm-score" style="color:#0090d0">COM</div>
+      <div class="qm-dim">Completitud (Completeness)</div>
+      <div class="qm-desc">¿Están todos los registros esperados? 100% - % missing. Considerar ventanas temporales obligatorias (ej: hora punta).</div>
+    </div>
+    <div class="qm-cell">
+      <div class="qm-score" style="color:#9b6bff">CON</div>
+      <div class="qm-dim">Consistencia (Consistency)</div>
+      <div class="qm-desc">¿Coherentes entre sí y con otras fuentes? Verificar rangos físicos imposibles: nivel embalse &gt; cota de coronamiento.</div>
+    </div>
+    <div class="qm-cell">
+      <div class="qm-score" style="color:#ff6b35">UNI</div>
+      <div class="qm-dim">Unicidad (Uniqueness)</div>
+      <div class="qm-desc">¿Existen duplicados? Verificar por timestamp + sensor_id. Decisión de eliminación documentada en transformation_log.</div>
+    </div>
+    <div class="qm-cell">
+      <div class="qm-score" style="color:#ffb830">OPO</div>
+      <div class="qm-dim">Oportunidad (Timeliness)</div>
+      <div class="qm-desc">¿Disponibles cuando se necesitan? Latencia entre medición y disponibilidad. Crítico en sistemas de alerta temprana.</div>
+    </div>
+    <div class="qm-cell">
+      <div class="qm-score" style="color:#ff4560">VAL</div>
+      <div class="qm-dim">Validez (Validity)</div>
+      <div class="qm-desc">¿Cumplen rangos físicamente posibles? Usar expresiones Regex para formatos y reglas de negocio para rangos.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Reporte ISO 25012 Automatizado</span>
+      <span class="code-desc">Score por dimensión + Plan de mejora</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-import">import</span> re
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# REPORTE CALIDAD ISO 25012 — Entregable auditable
+# Ref: ISO 25012:2008 — Data Quality Model
+# ─────────────────────────────────────────────────────────────</span>
+
+<span class="c-kw">def</span> <span class="c-fn">score_completitud</span>(df) -> dict:
+    <span class="c-var">pct_present</span> = (<span class="c-num">1</span> - df.isna().mean()) * <span class="c-num">100</span>
+    <span class="c-kw">return</span> {<span class="c-str">'score_global'</span>: pct_present.mean().round(<span class="c-num">2</span>), <span class="c-str">'por_variable'</span>: pct_present.to_dict()}
+
+<span class="c-kw">def</span> <span class="c-fn">score_unicidad</span>(df) -> dict:
+    <span class="c-var">n_dup</span> = df.duplicated().sum()
+    <span class="c-kw">return</span> {<span class="c-str">'score'</span>: round((<span class="c-num">1</span> - n_dup/len(df))*<span class="c-num">100</span>, <span class="c-num">2</span>), <span class="c-str">'duplicados'</span>: int(n_dup)}
+
+<span class="c-kw">def</span> <span class="c-fn">score_validez</span>(df, reglas: dict) -> dict:
+    <span class="c-str">"""
+    reglas = {'presion_piezometrica': (0, 120),  # msnm físicamente posible
+               'caudal_filtracion_ls': (0, 500)}
+    """</span>
+    <span class="c-var">scores</span> = {}
+    <span class="c-kw">for</span> col, (vmin, vmax) <span class="c-kw">in</span> reglas.items():
+        <span class="c-kw">if</span> col <span class="c-kw">in</span> df.columns:
+            <span class="c-var">validos</span> = df[col].between(vmin, vmax, inclusive=<span class="c-str">'both'</span>).sum()
+            <span class="c-var">scores</span>[col] = round(<span class="c-var">validos</span>/df[col].count()*<span class="c-num">100</span>, <span class="c-num">2</span>)
+    <span class="c-kw">return</span> <span class="c-var">scores</span>
+
+<span class="c-comment"># Reglas de negocio — definidas con el equipo de ingeniería</span>
+<span class="c-var">REGLAS_VALIDEZ</span> = {
+    <span class="c-str">'presion_piezometrica'</span>: (<span class="c-num">60.0</span>, <span class="c-num">120.0</span>),   <span class="c-comment"># msnm — cota mínima cimentación/coronamiento</span>
+    <span class="c-str">'caudal_filtracion_ls'</span>: (<span class="c-num">0.0</span>, <span class="c-num">250.0</span>),    <span class="c-comment"># l/s — límite operacional máximo</span>
+    <span class="c-str">'temperatura_agua_c'</span>:   (<span class="c-num">4.0</span>, <span class="c-num">35.0</span>),      <span class="c-comment"># °C — rango físico embalse tropical</span>
+}
+
+<span class="c-comment"># Consolidar reporte</span>
+<span class="c-var">reporte_calidad</span> = {
+    <span class="c-str">'completitud'</span>:  score_completitud(df_v01_raw),
+    <span class="c-str">'unicidad'</span>:     score_unicidad(df_v01_raw),
+    <span class="c-str">'validez'</span>:      score_validez(df_v01_raw, <span class="c-var">REGLAS_VALIDEZ</span>),
+    <span class="c-str">'proyecto'</span>:     <span class="c-str">'Presa La Esperanza'</span>,
+    <span class="c-str">'fecha_reporte'</span>: datetime.datetime.now().isoformat(),
+    <span class="c-str">'auditor'</span>:      <span class="c-str">'[Nombre · ISO 25012]'</span>
+}
+
+<span class="c-comment"># Exportar reporte — entregable a auditores</span>
+<span class="c-kw">with</span> open(<span class="c-str">'reporte_calidad_ISO25012.json'</span>, <span class="c-str">'w'</span>) <span class="c-kw">as</span> f:
+    json.dump(<span class="c-var">reporte_calidad</span>, f, indent=<span class="c-num">2</span>, ensure_ascii=<span class="c-kw">False</span>)</pre>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FASE 5 ═══ -->
+<section id="phase5" class="phase-section" style="--phase-color:#00d4ff">
+
+  <div class="phase-header">
+    <div class="phase-number">5</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase 5 — Ingeniería</div>
+      <div class="phase-title">Feature Engineering — Variables que Informan</div>
+      <div class="phase-subtitle">
+        El 60% del tiempo de un Data Scientist ocurre aquí. No se crean features por intuición: 
+        cada variable nueva debe tener justificación estadística y de dominio, 
+        y no puede haberse calculado usando datos del set de test.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#00d4ff; border-color:rgba(0,212,255,0.4)">CRISP-DM §4</span>
+      <span class="std-pill" style="color:#00d4ff; border-color:rgba(0,212,255,0.4)">WMO SPI</span>
+    </div>
+  </div>
+
+  <div class="alert alert-danger">
+    <span class="alert-icon">⛔</span>
+    <div class="alert-content">
+      <strong>DATA LEAKAGE — Error fatal:</strong> Toda transformación (imputación, escalado, encoding, 
+      cálculo de medias) debe ser <code>fit()</code> SOLO en el set de entrenamiento y luego 
+      aplicada con <code>transform()</code> a ambos sets. Jamás al revés. Un modelo con leakage 
+      funcionará en desarrollo y fallará en producción sin diagnóstico obvio.
+    </div>
+  </div>
+
+  <div class="section-title">Transformaciones No Lineales — Selección Justificada</div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#00d4ff">LOG</div>
+        <div class="card-title">Transformación Logarítmica</div>
+      </div>
+      <div class="card-body">
+        Cuándo: Distribuciones log-normales confirmadas (caudales, precipitación, sedimentos).
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><code>np.log1p(x)</code> — preferir sobre <code>log(x)</code> para manejar ceros sin offset arbitrario</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text">Verificar: skewness post-transformación debe ser |γ1| &lt; 0.5</span></div>
+          <div class="step-item"><span class="step-n">⚠</span><span class="step-text">No aplicar si la variable tiene interpretación en escala original para el negocio</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#00d4ff">BC</div>
+        <div class="card-title">Box-Cox / Yeo-Johnson</div>
+      </div>
+      <div class="card-body">
+        Cuándo: Sesgo fuerte, λ óptimo desconocido. Automático y auditable.
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">→</span><span class="step-text">Box-Cox: solo x &gt; 0. <code>scipy.stats.boxcox()</code> optimiza λ</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text">Yeo-Johnson: permite x ≤ 0 (diferencias de nivel, anomalías). Preferir en instrumentación</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text">Documentar el λ estimado: es un parámetro aprendido en train</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#00d4ff">SCL</div>
+        <div class="card-title">Escalado — Selección Crítica</div>
+      </div>
+      <div class="card-body">
+        <table class="data-table" style="margin-bottom:0; font-size:11px">
+          <tr><th>Escalado</th><th>Cuándo</th></tr>
+          <tr><td>Robust Scaler</td><td>Series hídrica con colas pesadas ✓</td></tr>
+          <tr><td>Z-Score Std.</td><td>Distribución normal confirmada</td></tr>
+          <tr><td>Min-Max</td><td>Rango fijo SIN outliers extremos</td></tr>
+          <tr><td>MaxAbs</td><td>Variables con positivos y negativos</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Features para Series Temporales Hidrológicas</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Feature Engineering Hidrológico</span>
+      <span class="code-desc">Rezagos + Medias móviles + SPI + Índices de dominio</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-import">from</span> sklearn.preprocessing <span class="c-import">import</span> RobustScaler, PowerTransformer
+<span class="c-import">from</span> sklearn.pipeline <span class="c-import">import</span> Pipeline
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# SPLIT PRIMERO — Regla absoluta contra Data Leakage
+# Todo el feature engineering se aprende en df_train
+# ─────────────────────────────────────────────────────────────</span>
+<span class="c-var">fecha_corte</span> = pd.Timestamp(<span class="c-str">'2024-01-01'</span>)
+<span class="c-var">df_v04_train</span> = df_v02_clean[df_v02_clean.index < <span class="c-var">fecha_corte</span>].copy()
+<span class="c-var">df_v04_test</span>  = df_v02_clean[df_v02_clean.index >= <span class="c-var">fecha_corte</span>].copy()
+
+log_transform(<span class="c-str">"SPLIT"</span>, <span class="c-str">f"Train: {df_v04_train.shape}, Test: {df_v04_test.shape}"</span>,
+              df_v02_clean.shape, df_v04_train.shape, <span class="c-str">"temporal_split"</span>)
+
+<span class="c-comment"># ─────────────────────────────────────────────────────────────
+# FEATURES TEMPORALES — Solo en train, luego transform en test
+# ─────────────────────────────────────────────────────────────</span>
+<span class="c-kw">def</span> <span class="c-fn">crear_features_hidrologicos</span>(df: pd.DataFrame, col_q: str, col_p: str) -> pd.DataFrame:
+    <span class="c-str">"""
+    Genera features estándar para modelado hidrológico.
+    IMPORTANTE: Llamar solo sobre el set correcto (no contaminar).
+    """</span>
+    df = df.copy()
+
+    <span class="c-comment"># Rezagos temporales</span>
+    <span class="c-kw">for</span> lag <span class="c-kw">in</span> [<span class="c-num">1</span>, <span class="c-num">3</span>, <span class="c-num">7</span>, <span class="c-num">14</span>, <span class="c-num">30</span>]:
+        df[<span class="c-str">f'{col_q}_lag{lag}d'</span>] = df[col_q].shift(lag)
+
+    <span class="c-comment"># Medias móviles — diferente ventana para capturar escala</span>
+    df[<span class="c-str">f'{col_q}_sma7'</span>]  = df[col_q].rolling(<span class="c-num">7</span>, min_periods=<span class="c-num">4</span>).mean()
+    df[<span class="c-str">f'{col_q}_sma30'</span>] = df[col_q].rolling(<span class="c-num">30</span>, min_periods=<span class="c-num">15</span>).mean()
+
+    <span class="c-comment"># Anomalía sobre media móvil (señal de alerta de filtración)</span>
+    df[<span class="c-str">f'{col_q}_anom_pct'</span>] = (df[col_q] / df[<span class="c-str">f'{col_q}_sma30'</span>] - <span class="c-num">1</span>) * <span class="c-num">100</span>
+
+    <span class="c-comment"># Componentes estacionales — sin data leakage, solo índices de fecha</span>
+    df[<span class="c-str">'mes'</span>]          = df.index.month
+    df[<span class="c-str">'semana_anio'</span>]  = df.index.isocalendar().week.astype(int)
+    df[<span class="c-str">'quincena'</span>]    = (df.index.day > <span class="c-num">15</span>).astype(int)
+
+    <span class="c-comment"># Coeficiente de escorrentía diario (requiere área de cuenca — dominio experto)</span>
+    <span class="c-var">AREA_CUENCA_KM2</span> = <span class="c-num">1250</span>
+    df[<span class="c-str">'coef_escorrentia'</span>] = df[col_q] / (df[col_p] * <span class="c-var">AREA_CUENCA_KM2</span> * <span class="c-num">1000</span> / <span class="c-num">86400</span> + <span class="c-num">1e-6</span>)
+
+    <span class="c-kw">return</span> df
+
+<span class="c-var">df_v04_train</span> = crear_features_hidrologicos(<span class="c-var">df_v04_train</span>, <span class="c-str">'caudal_m3s'</span>, <span class="c-str">'precip_mm'</span>)
+
+<span class="c-comment"># Pipeline Scikit-Learn — fit en train, transform en ambos</span>
+<span class="c-var">pipe_prepro</span> = Pipeline([
+    (<span class="c-str">'yeo'</span>, PowerTransformer(method=<span class="c-str">'yeo-johnson'</span>)),  <span class="c-comment"># permite x ≤ 0</span>
+    (<span class="c-str">'scaler'</span>, RobustScaler())                        <span class="c-comment"># robusto a outliers residuales</span>
+])
+
+<span class="c-var">cols_numericas</span> = df_v04_train.select_dtypes(<span class="c-str">'number'</span>).columns.tolist()
+<span class="c-var">df_v04_train</span>[<span class="c-var">cols_numericas</span>] = <span class="c-var">pipe_prepro</span>.fit_transform(<span class="c-var">df_v04_train</span>[<span class="c-var">cols_numericas</span>])
+<span class="c-var">df_v04_test</span>[<span class="c-var">cols_numericas</span>]  = <span class="c-var">pipe_prepro</span>.transform(<span class="c-var">df_v04_test</span>[<span class="c-var">cols_numericas</span>])</pre>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ FASE 6 ═══ -->
+<section id="phase6" class="phase-section" style="--phase-color:#ff4560">
+
+  <div class="phase-header">
+    <div class="phase-number">6</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Fase 6 — Producción</div>
+      <div class="phase-title">Despliegue, Gobernanza y Monitoreo Continuo</div>
+      <div class="phase-subtitle">
+        Un análisis sin despliegue es un documento. Un modelo sin monitoreo es un riesgo. 
+        La gobernanza de datos garantiza que el pipeline sea reproducible por cualquier 
+        auditor externo 5 años después de su implementación.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#ff4560; border-color:rgba(255,69,96,0.4)">ISO 9001</span>
+      <span class="std-pill" style="color:#ff4560; border-color:rgba(255,69,96,0.4)">ITRB §12</span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#ff4560">DEP</div>
+        <div class="card-title">Infraestructura de Despliegue</div>
+      </div>
+      <div class="card-body">
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Databricks / Spark:</strong> para escalado distribuido de procesamiento y orquestación de pipelines ETL.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>MLflow:</strong> versionado de modelos, parámetros e hiperparámetros. Registro de experimentos reproducible.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Docker:</strong> encapsulamiento de dependencias. Imagen versionada por proyecto y fecha.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>APIs REST:</strong> FastAPI con validación Pydantic para scoring en tiempo real. OpenAPI autodocumentado.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="color:#ff4560">GOV</div>
+        <div class="card-title">Gobernanza y Catálogo</div>
+      </div>
+      <div class="card-body">
+        <div class="step-list">
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Catálogo de Datos (Collibra/DataHub):</strong> Linaje completo de cada dataset. Quién creó, qué transformaciones recibió, cuándo.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Monitoreo de Data Drift:</strong> Evidently AI — alertar cuando la distribución de entrada diverge del entrenamiento.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Alertas de seguridad:</strong> Webhook automático cuando cualquier sensor supera umbral GISTM.</span></div>
+          <div class="step-item"><span class="step-n">→</span><span class="step-text"><strong>Exportar transformation_log:</strong> CSV/JSON firmado. Registro inmutable de cada cambio al dataset.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Señales de Alerta — Monitoreo Continuo de Seguridad de Presas</div>
+
+  <div class="alert alert-danger">
+    <span class="alert-icon">🚨</span>
+    <div class="alert-content">
+      <strong>ITRB/GISTM — Reporte Inmediato Obligatorio:</strong> Cualquiera de las siguientes condiciones 
+      detectadas automáticamente por el pipeline debe escalar a una notificación al ingeniero responsable 
+      con timestamp, valor medido, umbral superado y registro en bitácora de monitoreo.
+    </div>
+  </div>
+
+  <table class="data-table">
+    <tr>
+      <th>Sensor / Variable</th>
+      <th>Señal de Alerta</th>
+      <th>Umbral Típico</th>
+      <th>Norma Referencia</th>
+    </tr>
+    <tr>
+      <td>Piezómetros</td>
+      <td>Tendencia creciente sostenida sin lluvia asociada (&gt; 7 días)</td>
+      <td>Definido en Plan de Instrumentación</td>
+      <td>ICOLD B.158 §4.3</td>
+    </tr>
+    <tr>
+      <td>Inclinómetros</td>
+      <td>Lectura &gt; 50% del umbral de alerta del plan</td>
+      <td>Variable por estructura</td>
+      <td>GISTM §7.4</td>
+    </tr>
+    <tr>
+      <td>Aforadores de filtración</td>
+      <td>Incremento &gt; 20% sobre media móvil de 30 días</td>
+      <td>&gt; 12 l/s (ejemplo)</td>
+      <td>ITRB §12.1</td>
+    </tr>
+    <tr>
+      <td>Extensómetros</td>
+      <td>Velocidad de deformación &gt; 2× tasa histórica media</td>
+      <td>mm/día — específico por zona</td>
+      <td>ICOLD B.158 §5.2</td>
+    </tr>
+    <tr>
+      <td>Cualquier sensor MNAR</td>
+      <td>Ausencia sistemática sin justificación técnica registrada</td>
+      <td>3 períodos consecutivos</td>
+      <td>GISTM §9.3</td>
+    </tr>
+  </table>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">Python — Cierre del Pipeline + Exportación del Log</span>
+      <span class="code-desc">Entregable final auditable</span>
+    </div>
+    <div class="code-body">
+<pre><span class="c-comment"># ─────────────────────────────────────────────────────────────
+# CIERRE DE PIPELINE — Exportar evidencia auditable
+# Ref: ISO 9001:2015 §7.5 — Información documentada
+# ─────────────────────────────────────────────────────────────</span>
+
+<span class="c-comment"># 1. Exportar log de transformaciones completo</span>
+<span class="c-var">df_log</span> = pd.DataFrame(<span class="c-var">transformation_log</span>)
+<span class="c-var">df_log</span>.to_csv(
+    <span class="c-str">f'transformation_log_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'</span>,
+    index=<span class="c-kw">False</span>,
+    encoding=<span class="c-str">'utf-8'</span>
+)
+
+<span class="c-comment"># 2. Exportar datasets finales con hash de integridad</span>
+<span class="c-kw">for</span> nombre, df <span class="c-kw">in</span> {<span class="c-str">'v01_raw'</span>: df_v01_raw, <span class="c-str">'v02_clean'</span>: df_v02_clean,
+                     <span class="c-str">'v03_features'</span>: df_v03_features}.items():
+    <span class="c-var">filepath</span> = <span class="c-str">f'df_{nombre}.parquet'</span>
+    df.to_parquet(<span class="c-var">filepath</span>, engine=<span class="c-str">'pyarrow'</span>, compression=<span class="c-str">'snappy'</span>)
+    print(<span class="c-str">f"✓ {filepath} | shape: {df.shape} | hash: {hash_dataset(filepath)}"</span>)
+
+<span class="c-comment"># 3. Resumen ejecutivo</span>
+print(<span class="c-str">"═"</span>*60)
+print(<span class="c-str">f"PIPELINE COMPLETADO — {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"</span>)
+print(<span class="c-str">f"Transformaciones registradas : {len(transformation_log)}"</span>)
+print(<span class="c-str">f"Dataset final (train)        : {df_v04_train.shape}"</span>)
+print(<span class="c-str">f"Dataset final (test)         : {df_v04_test.shape}"</span>)
+print(<span class="c-str">f"Data Leakage verificado      : NO (split temporal pre-transformación)"</span>)
+print(<span class="c-str">f"Estándar aplicado            : ISO 25012 + CRISP-DM + GISTM"</span>)
+print(<span class="c-str">"═"</span>*60)</pre>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ ANTI-PATRONES ═══ -->
+<section id="phaseX" class="phase-section" style="--phase-color:#c8d8e0">
+
+  <div class="phase-header">
+    <div class="phase-number">X</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Anti-Patrones — Prohibidos</div>
+      <div class="phase-title">Lo que No Se Hace — Nunca</div>
+      <div class="phase-subtitle">
+        Estos errores no son opinables. Son fallas metodológicas con impacto directo 
+        en la validez del análisis, la reproducibilidad del trabajo y la seguridad 
+        de las conclusiones. En contextos de infraestructura crítica, algunos pueden 
+        implicar consecuencias legales y de seguridad humana.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#c8d8e0; border-color:rgba(200,216,224,0.3)">TODOS</span>
+    </div>
+  </div>
+
+  <div class="antipatterns">
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Imputar sin diagnosticar el mecanismo</strong> — MCAR, MAR y MNAR requieren estrategias completamente distintas. Aplicar media a un MNAR en piezómetros es un error de seguridad.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Eliminar outliers sin verificar su naturaleza</strong> — Un outlier en filtración de presa puede ser la señal de inicio de falla. Eliminar por rutina sin análisis es inaceptable.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Z-Score en distribuciones sesgadas</strong> — Caudales y precipitación son log-normales. Z-Score producirá falsos negativos en la cola derecha (los eventos extremos que más importan).</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Min-Max Scaling con outliers extremos</strong> — Un único valor extremo comprime toda la distribución al rango [0.001, 0.01]. Usar RobustScaler en series hidrológicas.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Asumir normalidad sin prueba estadística</strong> — La normalidad debe ser verificada con Shapiro-Wilk (n&lt;5000) o Anderson-Darling. No se asume nunca. Afecta la elección de correlación, pruebas de hipótesis y modelos.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Data Leakage por imputación antes del split</strong> — Calcular la media/mediana con todos los datos antes de separar train/test filtra información del futuro al modelo. El split va primero, siempre.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Avanzar al nivel N+1 de Gartner sin completar N</strong> — Construir modelos predictivos sin entender descriptivamente los datos produce modelos que no se pueden diagnosticar cuando fallan.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Resultados no reproducibles</strong> — Sin semilla aleatoria fija, sin log de transformaciones, sin hash del dataset, el análisis no puede ser auditado. Inválido para ITRB, ISO 9001 e ICOLD.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Pearson en datos con correlación no lineal</strong> — Pearson solo mide correlación lineal. En relaciones curvilíneas (caudal-turbidez, lluvia-escorrentía), Spearman o Kendall son los métodos correctos.</div>
+    </div>
+    <div class="ap-item">
+      <span class="ap-x">❌</span>
+      <div class="ap-text"><strong>Aplicar técnicas por costumbre sin justificación</strong> — "Siempre uso Random Forest" o "Siempre imputo con la media" no son decisiones técnicas. Cada elección debe tener fundamento estadístico explícito.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ DATASETS ═══ -->
+<section id="phaseDS" class="phase-section" style="--phase-color:#5a7585">
+
+  <div class="phase-header">
+    <div class="phase-number">DS</div>
+    <div class="phase-title-block">
+      <div class="phase-label">Aplicabilidad — Dominios</div>
+      <div class="phase-title">Datasets de Referencia por Dominio</div>
+      <div class="phase-subtitle">
+        El pipeline es metodológicamente invariante al dominio. 
+        Lo que cambia son las reglas de validez, los umbrales de alerta, 
+        la interpretación de outliers y las features de dominio. 
+        Aquí se mapean los desafíos analíticos específicos por sector.
+      </div>
+    </div>
+    <div class="phase-standards">
+      <span class="std-pill" style="color:#5a7585; border-color:rgba(90,117,133,0.4)">UNIVERSAL</span>
+    </div>
+  </div>
+
+  <div class="dataset-grid">
+    <div class="dataset-card" style="--ds-color:#00c8a0">
+      <div class="ds-sector">Ingeniería Hídrica</div>
+      <div class="ds-name">Monitoreo de Piezómetros / Inclinómetros en Presas</div>
+      <div class="ds-vars">Variables: presión, deformación, filtración, temperatura</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">MNAR crítico</span>
+        <span class="ds-tag">Series temporales</span>
+        <span class="ds-tag">Umbrales GISTM</span>
+        <span class="ds-tag">MAD outliers</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#0090d0">
+      <div class="ds-sector">Hidrología</div>
+      <div class="ds-name">Caudales Diarios — Red Hidrométrica Nacional</div>
+      <div class="ds-vars">Variables: Q(m³/s), P(mm), ETo, nivel río</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Log-normal</span>
+        <span class="ds-tag">Estacionalidad</span>
+        <span class="ds-tag">Rezagos</span>
+        <span class="ds-tag">SPI</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#9b6bff">
+      <div class="ds-sector">Climatología</div>
+      <div class="ds-name">Series Pluviométricas — Estaciones WMO</div>
+      <div class="ds-vars">Variables: P, T_max, T_min, HR, ETo, radiación</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Homogeneidad</span>
+        <span class="ds-tag">Anderson-Darling</span>
+        <span class="ds-tag">Interpolación</span>
+        <span class="ds-tag">WMO-No.8</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#ff6b35">
+      <div class="ds-sector">Infraestructura Hidráulica</div>
+      <div class="ds-name">Operación de Canal de Riego — FAO AQUASTAT</div>
+      <div class="ds-vars">Variables: Q_derivado, eficiencia, demanda agrícola</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Estacionalidad</span>
+        <span class="ds-tag">Target encoding</span>
+        <span class="ds-tag">FAO normas</span>
+        <span class="ds-tag">Outliers evento</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#ffb830">
+      <div class="ds-sector">Calidad de Agua</div>
+      <div class="ds-name">Monitoreo Fisicoquímico — Embalses y Ríos</div>
+      <div class="ds-vars">Variables: pH, turbidez, OD, coliformes, metales</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Límites regulatorios</span>
+        <span class="ds-tag">MCAR sensores</span>
+        <span class="ds-tag">Multicolineal</span>
+        <span class="ds-tag">IQR</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#00d4ff">
+      <div class="ds-sector">Energía Renovable</div>
+      <div class="ds-name">Generación Hidroeléctrica — Series de Potencia</div>
+      <div class="ds-vars">Variables: Q_turbinado, cota, potencia MW, eficiencia</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Series temporales</span>
+        <span class="ds-tag">Estacionalidad</span>
+        <span class="ds-tag">Predictivo</span>
+        <span class="ds-tag">STL</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#ff4560">
+      <div class="ds-sector">Finanzas</div>
+      <div class="ds-name">Detección de Fraude en Transacciones</div>
+      <div class="ds-vars">Variables: monto, hora, comerciante, geolocalización</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Desbalance clases</span>
+        <span class="ds-tag">SMOTE</span>
+        <span class="ds-tag">MNAR ingresos</span>
+        <span class="ds-tag">F1-score</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#c8d8e0">
+      <div class="ds-sector">Salud Pública</div>
+      <div class="ds-name">Epidemiología — Incidencia de Enfermedades Hídrica</div>
+      <div class="ds-vars">Variables: casos, cobertura agua, saneamiento, lluvia</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">MAR edad</span>
+        <span class="ds-tag">MICE</span>
+        <span class="ds-tag">Spearman</span>
+        <span class="ds-tag">Spatial</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#00c8a0">
+      <div class="ds-sector">Retail / E-Commerce</div>
+      <div class="ds-name">Conversiones Web y Comportamiento de Usuario</div>
+      <div class="ds-vars">Variables: sesión, tiempo, clicks, carrito, conversión</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Target encoding</span>
+        <span class="ds-tag">OHE cardinalidad</span>
+        <span class="ds-tag">Desbalance</span>
+        <span class="ds-tag">Leakage</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#9b6bff">
+      <div class="ds-sector">Deporte Profesional</div>
+      <div class="ds-name">Rendimiento Físico — Atletas de Alto Rendimiento</div>
+      <div class="ds-vars">Variables: velocidad, aceleración, HRV, carga, sueño</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Pearson físico</span>
+        <span class="ds-tag">Rezagos</span>
+        <span class="ds-tag">Isolation Forest</span>
+        <span class="ds-tag">MCAR sensor</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#ff6b35">
+      <div class="ds-sector">Industria / IoT</div>
+      <div class="ds-name">Mantenimiento Predictivo — Sensores de Maquinaria</div>
+      <div class="ds-vars">Variables: vibración, temperatura, corriente, presión</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">Multivariado</span>
+        <span class="ds-tag">LOF</span>
+        <span class="ds-tag">MAD</span>
+        <span class="ds-tag">Mahalanobis</span>
+      </div>
+    </div>
+    <div class="dataset-card" style="--ds-color:#ffb830">
+      <div class="ds-sector">Agricultura</div>
+      <div class="ds-name">Balance Hídrico de Suelo — Datos Agrometeorológicos</div>
+      <div class="ds-vars">Variables: θ_suelo, ETo, precipitación, rendimiento</div>
+      <div class="ds-challenges">
+        <span class="ds-tag">FAO-56</span>
+        <span class="ds-tag">Log-normal P</span>
+        <span class="ds-tag">Stacionalidad</span>
+        <span class="ds-tag">SPI</span>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    Pipeline v3.0 · <span>Data Discovery & Analytics</span> · Auditable bajo ISO 25012 · CRISP-DM · ITRB · GISTM · ISO 9001 · WMO · ICOLD · FAO
+  </div>
+  <div class="footer-right">
+    <a href="#">Metodología</a>
+    <a href="#">Estándares</a>
+    <a href="#">Changelog</a>
+  </div>
+</footer>
+
+<script>
+  function showPhase(id, tab) {
+    // Hide all
+    document.querySelectorAll('.phase-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+    // Show selected
+    document.getElementById(id).classList.add('active');
+    tab.classList.add('active');
+  }
+
+  function setLadder(el) {
+    document.querySelectorAll('.ladder-level').forEach(l => l.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // Auto-hide header standards on scroll
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => {
+    const current = window.scrollY;
+    lastScroll = current;
+  });
+</script>
+
+</body>
+</html>

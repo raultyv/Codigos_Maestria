@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Pipeline Master — Framework Adaptativo</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6ee7b7;
+    --accent2: #818cf8;
+    --accent3: #f59e0b;
+    --accent4: #f472b6;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #475569;
+    --danger: #f87171;
+    --success: #34d399;
+    --warn: #fbbf24;
+    --code-bg: #0d1117;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(110,231,183,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(110,231,183,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 60px 40px 40px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(110,231,183,0.04) 0%, transparent 100%);
+  }
+
+  .header-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-tag::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 70%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .header-sub {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--text-dim);
+    max-width: 700px;
+    line-height: 1.5;
+  }
+
+  .header-meta {
+    margin-top: 32px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: var(--surface);
+  }
+
+  .meta-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(110,231,183,0.06); }
+
+  /* LAYOUT */
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+
+  /* INTRO SECTION */
+  .intro-section {
+    padding: 48px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .intro-card {
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .intro-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+
+  .intro-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent2);
+  }
+
+  .intro-card.warn::before { background: var(--accent3); }
+  .intro-card.danger::before { background: var(--danger); }
+
+  .intro-card-title {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .intro-card-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* PHASE NAV */
+  .phase-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .phase-nav::-webkit-scrollbar { display: none; }
+
+  .phase-nav-inner {
+    display: flex;
+    gap: 0;
+    white-space: nowrap;
+  }
+
+  .phase-btn {
+    padding: 16px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .phase-btn:hover { color: var(--text); }
+  .phase-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .phase-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .phase-btn.active .phase-num { background: var(--accent); color: var(--bg); }
+
+  /* PHASE CONTENT */
+  .phase-content { display: none; }
+  .phase-content.active { display: block; }
+
+  /* SECTION HEADER */
+  .section-header {
+    padding: 56px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 40px;
+  }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  .section-desc {
+    margin-top: 16px;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  .section-badge {
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .badge-required { background: rgba(248,113,113,0.12); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+  .badge-core { background: rgba(110,231,183,0.12); color: var(--accent); border: 1px solid rgba(110,231,183,0.3); }
+  .badge-adaptive { background: rgba(129,140,248,0.12); color: var(--accent2); border: 1px solid rgba(129,140,248,0.3); }
+
+  /* CONTENT GRID */
+  .content-grid {
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .content-grid.single { grid-template-columns: 1fr; }
+  .content-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border); }
+  .card.span2 { grid-column: span 2; }
+
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+
+  .card-icon {
+    font-size: 18px;
+    opacity: 0.7;
+  }
+
+  .card-body { padding: 24px; }
+
+  /* CODE BLOCKS */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #e6edf3;
+    margin: 0;
+  }
+
+  .kw { color: #ff7b72; }       /* keywords */
+  .fn { color: #d2a8ff; }       /* functions */
+  .str { color: #a5d6ff; }      /* strings */
+  .num { color: #79c0ff; }      /* numbers */
+  .cm { color: #8b949e; font-style: italic; } /* comments */
+  .cls { color: #ffa657; }      /* classes */
+  .op { color: #ff7b72; }       /* operators */
+  .var { color: #e6edf3; }      /* variables */
+  .imp { color: #6ee7b7; }      /* imports */
+  .dec { color: #f2cc60; }      /* decorators */
+
+  /* DECISION TABLE */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .decision-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .decision-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .decision-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .decision-table tr:last-child td { border-bottom: none; }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-green { background: rgba(52,211,153,0.15); color: var(--success); }
+  .tag-yellow { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .tag-red { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .tag-blue { background: rgba(129,140,248,0.15); color: var(--accent2); }
+  .tag-teal { background: rgba(110,231,183,0.15); color: var(--accent); }
+  .tag-pink { background: rgba(244,114,182,0.15); color: var(--accent4); }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .checklist li::before {
+    content: '□';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .checklist li.done::before { content: '■'; color: var(--success); }
+  .checklist li strong { color: var(--text); }
+
+  /* ALERT BOXES */
+  .alert {
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    line-height: 1.6;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin: 0;
+  }
+
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-content { color: var(--text-dim); }
+  .alert-content strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+  .alert-warn { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); }
+  .alert-danger { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); }
+  .alert-success { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.2); }
+  .alert-info { background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.2); }
+
+  /* FLOW DIAGRAM */
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 24px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .flow-diagram::-webkit-scrollbar { display: none; }
+
+  .flow-node {
+    flex-shrink: 0;
+    padding: 14px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    text-align: center;
+    min-width: 120px;
+    position: relative;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .flow-node[onclick] { cursor: pointer; }
+  .flow-node[onclick]:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+  .flow-node:not([onclick]):hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .flow-node.highlight {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(248,113,113,0.06);
+  }
+
+  .flow-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    height: 1px;
+    background: var(--border);
+    position: relative;
+  }
+
+  .flow-arrow::after {
+    content: '▶';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--border);
+  }
+
+  /* METRICS TABLE */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 16px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .metric-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .metric-formula {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+  }
+
+  .metric-desc {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* SECTION DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 40px;
+  }
+
+  /* TYPOGRAPHY HELPERS */
+  p { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+  strong { color: var(--text); font-weight: 700; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* FULL-WIDTH CODE SECTION */
+  .code-section {
+    padding: 0 40px 40px;
+  }
+
+  .code-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-top: 24px;
+  }
+
+  /* ADAPTIVE DECISION TREE */
+  .decision-tree {
+    padding: 32px 40px;
+  }
+
+  .tree-question {
+    background: var(--surface);
+    border: 1px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tree-question::before {
+    content: '?';
+    width: 28px;
+    height: 28px;
+    background: var(--accent2);
+    color: var(--bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .tree-branch {
+    margin-left: 40px;
+    border-left: 2px solid var(--border);
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+
+  .tree-answer {
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .tree-answer .arrow { color: var(--accent3); font-weight: 700; }
+  .tree-answer .result { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 12px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .intro-section { grid-template-columns: 1fr; padding: 32px 20px; }
+    .content-grid { grid-template-columns: 1fr; padding: 20px; }
+    .content-grid.three { grid-template-columns: 1fr; }
+    .section-header { padding: 40px 20px 24px; grid-template-columns: 1fr; }
+    .code-section { padding: 0 20px 24px; }
+    header { padding: 40px 20px 32px; }
+    .phase-nav { padding: 0 20px; }
+    .divider { margin: 0 20px; }
+    .decision-tree { padding: 24px 20px; }
+    .card.span2 { grid-column: span 1; }
+  }
+
+  /* SCROLLBAR STYLING */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ANIMATION */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .phase-content.active { animation: fadeIn 0.25s ease; }
+
+  /* PIPELINE OVERVIEW */
+  .pipeline-overview {
+    padding: 40px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .overview-step {
+    padding: 20px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .overview-step:hover { border-color: var(--accent); transform: translateY(-3px); }
+
+  .overview-step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--border);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .overview-step-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  .overview-step-tag {
+    margin-top: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .pipeline-overview { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-tag">ML Pipeline Master · Framework Adaptativo</div>
+  <h1>Pipeline Universal<br>de Machine Learning</h1>
+  <p class="header-sub">Metodología estándar, auditable y adaptativa para cualquier proyecto de ciencia de datos e inteligencia artificial.</p>
+  <div class="header-meta">
+    <span class="meta-chip active">scikit-learn compatible</span>
+    <span class="meta-chip">pandas · numpy · matplotlib</span>
+    <span class="meta-chip">CRISP-DM extended</span>
+    <span class="meta-chip">Anti data-leakage</span>
+    <span class="meta-chip active">Producción-ready</span>
+  </div>
+</header>
+
+<!-- INTRO CARDS -->
+<div class="intro-section">
+  <div class="intro-card">
+    <div class="intro-card-title">Principio 1 · Anti-Leakage</div>
+    <p class="intro-card-text">Todo fit/transform de preprocesamiento se aplica <strong>después</strong> del train/test split. El test set nunca contamina los parámetros aprendidos.</p>
+  </div>
+  <div class="intro-card warn">
+    <div class="intro-card-title">Principio 2 · Reproducibilidad</div>
+    <p class="intro-card-text">Semilla fija en todos los pasos estocásticos. Código versionable, parametrizable y ejecutable en cualquier entorno con el mismo resultado.</p>
+  </div>
+  <div class="intro-card danger">
+    <div class="intro-card-title">Principio 3 · Baseline First</div>
+    <p class="intro-card-text">Siempre comparar con el modelo más simple posible. La complejidad adicional solo se justifica si el beneficio es estadísticamente significativo.</p>
+  </div>
+</div>
+
+<!-- STICKY NAV -->
+<nav class="phase-nav">
+  <div class="phase-nav-inner">
+    <button class="phase-btn active" data-phase="0" onclick="showPhase(0)">
+      <span class="phase-num">0</span> VISIÓN GENERAL
+    </button>
+    <button class="phase-btn" data-phase="1" onclick="showPhase(1)">
+      <span class="phase-num">1</span> COMPRENSIÓN
+    </button>
+    <button class="phase-btn" data-phase="2" onclick="showPhase(2)">
+      <span class="phase-num">2</span> EDA
+    </button>
+    <button class="phase-btn" data-phase="3" onclick="showPhase(3)">
+      <span class="phase-num">3</span> PREPROCESAMIENTO
+    </button>
+    <button class="phase-btn" data-phase="4" onclick="showPhase(4)">
+      <span class="phase-num">4</span> MODELADO
+    </button>
+    <button class="phase-btn" data-phase="5" onclick="showPhase(5)">
+      <span class="phase-num">5</span> EVALUACIÓN
+    </button>
+    <button class="phase-btn" data-phase="6" onclick="showPhase(6)">
+      <span class="phase-num">6</span> INTERPRETABILIDAD
+    </button>
+    <button class="phase-btn" data-phase="7" onclick="showPhase(7)">
+      <span class="phase-num">7</span> PRODUCCIÓN
+    </button>
+    <button class="phase-btn" data-phase="8" onclick="showPhase(8)">
+      <span class="phase-num">8</span> PLANTILLA COMPLETA
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 0: OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content active" id="phase-0">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 00 · Mapa completo</div>
+      <h2 class="section-title">Visión General<br>del Pipeline</h2>
+      <p class="section-desc">10 fases secuenciales, cada una condicionada a la anterior. El flujo es lineal pero los retornos son frecuentes.</p>
+    </div>
+    <span class="section-badge badge-core">SIEMPRE EJECUTAR</span>
+  </div>
+
+  <div class="pipeline-overview">
+    <div class="overview-step" onclick="showPhase(1)">
+      <span class="overview-step-num">01</span>
+      <div class="overview-step-name">COMPRENSIÓN DEL PROBLEMA</div>
+      <div class="overview-step-tag"><span class="tag tag-red">REQUERIDO</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(2)">
+      <span class="overview-step-num">02</span>
+      <div class="overview-step-name">ANÁLISIS EXPLORATORIO (EDA)</div>
+      <div class="overview-step-tag"><span class="tag tag-red">REQUERIDO</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(3)">
+      <span class="overview-step-num">03</span>
+      <div class="overview-step-name">PREPROCESAMIENTO & SPLIT</div>
+      <div class="overview-step-tag"><span class="tag tag-red">REQUERIDO</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(4)">
+      <span class="overview-step-num">04</span>
+      <div class="overview-step-name">BASELINE + MODELADO</div>
+      <div class="overview-step-tag"><span class="tag tag-red">REQUERIDO</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(5)">
+      <span class="overview-step-num">05</span>
+      <div class="overview-step-name">EVALUACIÓN MULTI-MÉTRICA</div>
+      <div class="overview-step-tag"><span class="tag tag-red">REQUERIDO</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(6)">
+      <span class="overview-step-num">06</span>
+      <div class="overview-step-name">INTERPRETABILIDAD (SHAP)</div>
+      <div class="overview-step-tag"><span class="tag tag-yellow">CONTEXTUAL</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(4)">
+      <span class="overview-step-num">07</span>
+      <div class="overview-step-name">TUNING DE HIPERPARÁMETROS</div>
+      <div class="overview-step-tag"><span class="tag tag-yellow">CONTEXTUAL</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(5)">
+      <span class="overview-step-num">08</span>
+      <div class="overview-step-name">VALIDACIÓN CRUZADA FINAL</div>
+      <div class="overview-step-tag"><span class="tag tag-red">REQUERIDO</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(7)">
+      <span class="overview-step-num">09</span>
+      <div class="overview-step-name">PIPELINE DE PRODUCCIÓN</div>
+      <div class="overview-step-tag"><span class="tag tag-blue">PRODUCCIÓN</span></div>
+    </div>
+    <div class="overview-step" onclick="showPhase(7)">
+      <span class="overview-step-num">10</span>
+      <div class="overview-step-name">MONITOREO & RE-TRAIN</div>
+      <div class="overview-step-tag"><span class="tag tag-blue">PRODUCCIÓN</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- FLUJO VISUAL -->
+  <div class="content-grid single">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Flujo de Datos a través del Pipeline</span>
+        <span class="card-icon">⟶</span>
+      </div>
+      <div class="card-body">
+        <div class="flow-diagram">
+          <div class="flow-node">RAW DATA</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(2)" title="Ir a EDA">EDA</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node highlight" onclick="showPhase(3)" title="Ir a Preprocesamiento">SPLIT<br>Train/Test</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(3)" title="Ir a Preprocesamiento">FIT<br>Preproc (Train)</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(3)" title="Ir a Preprocesamiento">TRANSFORM<br>Train + Test</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(4)" title="Ir a Modelado">BASELINE</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(4)" title="Ir a Modelado">FIT MODEL<br>(Train)</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(5)" title="Ir a Evaluación">EVALUATE<br>(Test)</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(6)" title="Ir a Interpretabilidad">INTERPRET</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node" onclick="showPhase(7)" title="Ir a Producción">DEPLOY</div>
+        </div>
+        <div class="alert alert-danger" style="margin-top:16px">
+          <span class="alert-icon">🚨</span>
+          <div class="alert-content">
+            <strong>El split es la barrera sagrada.</strong>
+            Todo lo que esté a la izquierda del split (EDA, estadísticas descriptivas) puede ver todos los datos. Todo lo que esté a la derecha (scaling, encoding, imputation, feature selection) debe aprender SOLO de los datos de entrenamiento y luego aplicarse al test.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÁRBOL DE DECISIÓN ADAPTATIVO -->
+  <div class="section-header" style="padding-top:24px">
+    <div>
+      <div class="phase-label">Árbol de decisión · Tipo de problema</div>
+      <h2 class="section-title" style="font-size:32px">¿Qué algoritmo<br>debo usar?</h2>
+    </div>
+    <span class="section-badge badge-adaptive">ADAPTATIVO</span>
+  </div>
+
+  <div class="decision-tree">
+    <div class="tree-question">¿Tienes variable objetivo (y) etiquetada?</div>
+    <div class="tree-branch">
+      <div class="tree-answer"><span class="arrow">✓ SÍ</span> → <span class="result">Aprendizaje SUPERVISADO</span></div>
+      <div style="margin-left:20px; margin-bottom:12px">
+        <div class="tree-question">¿y es continua (número real)?</div>
+        <div class="tree-branch">
+          <div class="tree-answer"><span class="arrow">✓ SÍ</span> → <span class="result">REGRESIÓN: LinearReg → Ridge/Lasso → RandomForest → GradientBoosting → SVR → NN</span></div>
+          <div class="tree-answer"><span class="arrow">✗ NO (categoría)</span> → <span class="result">CLASIFICACIÓN: LogReg → DecisionTree → RandomForest → GradientBoosting → SVM → NN</span></div>
+        </div>
+      </div>
+      <div class="tree-answer"><span class="arrow">✗ NO (datos sin etiquetar)</span> → <span class="result">Aprendizaje NO SUPERVISADO</span></div>
+      <div style="margin-left:20px; margin-bottom:12px">
+        <div class="tree-question">¿Objetivo principal?</div>
+        <div class="tree-branch">
+          <div class="tree-answer"><span class="arrow">Agrupar observaciones similares</span> → <span class="result">CLUSTERING: K-Means → Jerárquico → DBSCAN → GMM</span></div>
+          <div class="tree-answer"><span class="arrow">Reducir dimensiones / visualizar</span> → <span class="result">REDUCCIÓN: PCA → UMAP → t-SNE → NMF</span></div>
+          <div class="tree-answer"><span class="arrow">Detectar anomalías</span> → <span class="result">ANOMALÍAS: IsolationForest → OneClassSVM → Autoencoder → LOF</span></div>
+          <div class="tree-answer"><span class="arrow">Datos secuenciales / temporales</span> → <span class="result">SERIES DE TIEMPO: SARIMA → Prophet → LSTM → TCN</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 1: COMPRENSIÓN DEL PROBLEMA
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-1">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 01 · Problem Understanding</div>
+      <h2 class="section-title">Comprensión<br>del Problema</h2>
+      <p class="section-desc">Antes de escribir una sola línea de código, responde estas preguntas. Si no puedes, aún no estás listo para modelar.</p>
+    </div>
+    <span class="section-badge badge-required">OBLIGATORIO</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Checklist de Comprensión</span>
+        <span class="card-icon">✓</span>
+      </div>
+      <div class="card-body">
+        <ul class="checklist">
+          <li><strong>Tipo de tarea:</strong> ¿Clasificación, regresión, clustering, detección de anomalías, ranking, series de tiempo?</li>
+          <li><strong>Variable objetivo (y):</strong> ¿Qué exactamente queremos predecir? Unidades, rango esperado, distribución.</li>
+          <li><strong>Fuente de datos:</strong> ¿Cómo fueron recolectados? ¿Hay sesgo de selección? ¿Están actualizados?</li>
+          <li><strong>Restricciones de dominio:</strong> ¿Qué no puede hacer el modelo? (ej: no puede predecir valores negativos de caudal)</li>
+          <li><strong>Métrica de éxito:</strong> ¿Qué métrica alinea con el objetivo de negocio/científico?</li>
+          <li><strong>Stakeholders y uso:</strong> ¿Quién usará el modelo? ¿Cómo? ¿Qué nivel de interpretabilidad necesitan?</li>
+          <li><strong>Baseline disponible:</strong> ¿Existe algún método actual con el que comparar?</li>
+          <li><strong>Frecuencia de re-entrenamiento:</strong> ¿Los datos cambian con el tiempo? ¿Data drift esperado?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Definición Formal del Problema</span>
+        <span class="card-icon">📐</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="cm"># ─────────────────────────────────────────────────────────
+# PLANTILLA DE DEFINICIÓN DE PROBLEMA
+# Completar antes de cualquier análisis
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="var">PROBLEM_DEFINITION</span> <span class="op">=</span> {
+    <span class="str">"task_type"</span>: <span class="str">"regression"</span>,  <span class="cm"># classification|regression|clustering|anomaly|ts</span>
+    <span class="str">"target_variable"</span>: <span class="str">"flow_m3s"</span>,
+    <span class="str">"target_type"</span>: <span class="str">"continuous"</span>,  <span class="cm"># continuous|binary|multiclass|ordinal</span>
+    <span class="str">"input_features"</span>: [<span class="str">"precipitation_mm"</span>, <span class="str">"temp_c"</span>, <span class="str">"soil_moisture"</span>],
+    <span class="str">"temporal_structure"</span>: <span class="cls">True</span>,  <span class="cm"># ¿datos ordenados en el tiempo?</span>
+    <span class="str">"success_metric"</span>: <span class="str">"NSE"</span>,       <span class="cm"># métrica primaria</span>
+    <span class="str">"success_threshold"</span>: <span class="num">0.65</span>,    <span class="cm"># mínimo aceptable</span>
+    <span class="str">"interpretability_required"</span>: <span class="str">"high"</span>,  <span class="cm"># low|medium|high</span>
+    <span class="str">"production_latency_ms"</span>: <span class="num">100</span>,  <span class="cm"># tiempo máximo de predicción</span>
+    <span class="str">"n_samples"</span>: <span class="num">5000</span>,
+    <span class="str">"n_features"</span>: <span class="num">15</span>,
+    <span class="str">"class_balance"</span>: <span class="cls">None</span>,  <span class="cm"># None si regresión, ratio si clasificación</span>
+    <span class="str">"known_physics_constraints"</span>: [
+        <span class="str">"flow >= 0"</span>,
+        <span class="str">"continuity_equation_must_hold"</span>
+    ]
+}
+
+<span class="cm"># Imprimir resumen del problema</span>
+<span class="kw">for</span> <span class="var">k</span>, <span class="var">v</span> <span class="kw">in</span> <span class="var">PROBLEM_DEFINITION</span>.<span class="fn">items</span>():
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  {k:<30} {v}"</span>)</pre>
+      </div>
+    </div>
+
+    <div class="card span2">
+      <div class="card-header">
+        <span class="card-title">Tabla de Selección de Métrica Primaria</span>
+        <span class="card-icon">📊</span>
+      </div>
+      <div class="card-body">
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th>Tipo de Tarea</th>
+              <th>Contexto</th>
+              <th>Métrica Primaria</th>
+              <th>Métricas Secundarias</th>
+              <th>NUNCA usar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-blue">Regresión</span></td>
+              <td>Predicción hidrológica</td>
+              <td><strong>NSE, KGE</strong></td>
+              <td>RMSE, MAE, PBIAS</td>
+              <td>Solo R²</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-blue">Regresión</span></td>
+              <td>General / ingeniería</td>
+              <td><strong>RMSE</strong></td>
+              <td>MAE, R², MAPE</td>
+              <td>Solo accuracy</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-teal">Clasificación</span></td>
+              <td>Clases balanceadas</td>
+              <td><strong>F1-Macro</strong></td>
+              <td>Precision, Recall, AUC-ROC</td>
+              <td>Solo Accuracy</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-teal">Clasificación</span></td>
+              <td>Clases desbalanceadas</td>
+              <td><strong>AUC-PR, F1-Minority</strong></td>
+              <td>AUC-ROC, Recall</td>
+              <td>Accuracy (engañoso)</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-teal">Clasificación</span></td>
+              <td>Costo asimétrico (fraude, inundación)</td>
+              <td><strong>Recall (clase rara)</strong></td>
+              <td>Precision, F1, AUC-PR</td>
+              <td>Accuracy, F1-Macro</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-pink">Clustering</span></td>
+              <td>Sin etiquetas conocidas</td>
+              <td><strong>Silhouette Score</strong></td>
+              <td>Davies-Bouldin, Calinski-Harabasz</td>
+              <td>Accuracy</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-yellow">Series Tiempo</span></td>
+              <td>Pronóstico multistep</td>
+              <td><strong>RMSE por horizonte</strong></td>
+              <td>MAE, MAPE, skill score</td>
+              <td>R² (no válido en TS)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 2: EDA
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-2">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 02 · Exploratory Data Analysis</div>
+      <h2 class="section-title">Análisis Exploratorio<br>de Datos</h2>
+      <p class="section-desc">La única fase donde puedes ver TODO el dataset. Aquí construyes el conocimiento que guiará cada decisión posterior.</p>
+    </div>
+    <span class="section-badge badge-required">OBLIGATORIO</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">EDA Sistemático — Parte 1: Estructura</span>
+        <span class="card-icon">🔍</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">import pandas as pd</span>
+<span class="imp">import numpy as np</span>
+<span class="imp">import matplotlib.pyplot as plt</span>
+<span class="imp">import seaborn as sns</span>
+<span class="imp">from scipy import stats</span>
+
+<span class="cm"># ── 1. ESTRUCTURA DEL DATASET ─────────────────────────────</span>
+<span class="fn">print</span>(<span class="str">"═══ FORMA DEL DATASET ═══"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Filas: {df.shape[0]:,} | Columnas: {df.shape[1]}"</span>)
+<span class="fn">print</span>(<span class="str">"\n══ TIPOS DE DATOS ══"</span>)
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">dtypes</span>.<span class="fn">value_counts</span>())
+<span class="fn">print</span>(<span class="str">"\n══ VALORES FALTANTES ══"</span>)
+<span class="var">missing</span> <span class="op">=</span> <span class="var">df</span>.<span class="fn">isnull</span>().<span class="fn">sum</span>() <span class="op">/</span> <span class="fn">len</span>(<span class="var">df</span>) <span class="op">*</span> <span class="num">100</span>
+<span class="fn">print</span>(<span class="var">missing</span>[<span class="var">missing</span> <span class="op">></span> <span class="num">0</span>].<span class="fn">sort_values</span>(<span class="var">ascending</span><span class="op">=</span><span class="cls">False</span>))
+
+<span class="cm"># ── 2. ESTADÍSTICAS DESCRIPTIVAS EXTENDIDAS ───────────────</span>
+<span class="var">desc</span> <span class="op">=</span> <span class="var">df</span>.<span class="fn">describe</span>().<span class="fn">T</span>
+<span class="var">desc</span>[<span class="str">'cv'</span>] <span class="op">=</span> <span class="var">desc</span>[<span class="str">'std'</span>] <span class="op">/</span> <span class="var">desc</span>[<span class="str">'mean'</span>]    <span class="cm"># coef. variación</span>
+<span class="var">desc</span>[<span class="str">'skew'</span>] <span class="op">=</span> <span class="var">df</span>.<span class="fn">skew</span>()                  <span class="cm"># asimetría</span>
+<span class="var">desc</span>[<span class="str">'kurt'</span>] <span class="op">=</span> <span class="var">df</span>.<span class="fn">kurtosis</span>()              <span class="cm"># curtosis</span>
+<span class="fn">print</span>(<span class="var">desc</span>.<span class="fn">round</span>(<span class="num">3</span>))
+
+<span class="cm"># Alerta si asimetría > 2 (candidata a transformación log)</span>
+<span class="var">skewed_cols</span> <span class="op">=</span> <span class="var">desc</span>[<span class="var">desc</span>[<span class="str">'skew'</span>].<span class="fn">abs</span>() <span class="op">></span> <span class="num">2</span>].<span class="fn">index</span>.<span class="fn">tolist</span>()
+<span class="kw">if</span> <span class="var">skewed_cols</span>:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n⚠ Columnas con alta asimetría: {skewed_cols}"</span>)
+    <span class="fn">print</span>(<span class="str">"  → Considerar transformación log/sqrt/Box-Cox"</span>)</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">EDA Sistemático — Parte 2: Relaciones</span>
+        <span class="card-icon">🔗</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="cm"># ── 3. ANÁLISIS DE CORRELACIONES ──────────────────────────</span>
+<span class="var">corr_pearson</span>  <span class="op">=</span> <span class="var">df</span>.<span class="fn">corr</span>(<span class="var">method</span><span class="op">=</span><span class="str">'pearson'</span>)  <span class="cm"># lineal</span>
+<span class="var">corr_spearman</span> <span class="op">=</span> <span class="var">df</span>.<span class="fn">corr</span>(<span class="var">method</span><span class="op">=</span><span class="str">'spearman'</span>) <span class="cm"># monotónica</span>
+
+<span class="cm"># Diferencia grande Pearson vs Spearman → relación no-lineal</span>
+<span class="var">diff</span> <span class="op">=</span> (<span class="var">corr_spearman</span> <span class="op">-</span> <span class="var">corr_pearson</span>).<span class="fn">abs</span>()
+<span class="fn">print</span>(<span class="str">"Pares con relación no-lineal significativa:"</span>)
+<span class="fn">print</span>(<span class="var">diff</span>[<span class="var">diff</span> <span class="op">></span> <span class="num">0.15</span>].<span class="fn">stack</span>().<span class="fn">sort_values</span>(<span class="var">ascending</span><span class="op">=</span><span class="cls">False</span>).<span class="fn">head</span>(<span class="num">10</span>))
+
+<span class="cm"># ── 4. DETECCIÓN DE MULTICOLINEALIDAD (VIF) ───────────────</span>
+<span class="kw">from</span> <span class="imp">statsmodels.stats.outliers_influence</span> <span class="kw">import</span> <span class="cls">variance_inflation_factor</span>
+
+<span class="var">X_numeric</span> <span class="op">=</span> <span class="var">df</span>.<span class="fn">select_dtypes</span>(<span class="str">'number'</span>).<span class="fn">dropna</span>()
+<span class="var">vif_data</span> <span class="op">=</span> <span class="cls">pd</span>.<span class="cls">DataFrame</span>()
+<span class="var">vif_data</span>[<span class="str">"feature"</span>] <span class="op">=</span> <span class="var">X_numeric</span>.<span class="fn">columns</span>
+<span class="var">vif_data</span>[<span class="str">"VIF"</span>] <span class="op">=</span> [<span class="fn">variance_inflation_factor</span>(
+    <span class="var">X_numeric</span>.<span class="fn">values</span>, <span class="var">i</span>) <span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="var">X_numeric</span>.<span class="fn">shape</span>[<span class="num">1</span>])]
+<span class="fn">print</span>(<span class="var">vif_data</span>.<span class="fn">sort_values</span>(<span class="str">"VIF"</span>, <span class="var">ascending</span><span class="op">=</span><span class="cls">False</span>))
+<span class="cm"># VIF > 10 → multicolinealidad alta → considerar eliminar/combinar</span>
+
+<span class="cm"># ── 5. DETECCIÓN DE OUTLIERS (MÉTODO IQR) ────────────────</span>
+<span class="kw">def</span> <span class="fn">detect_outliers_iqr</span>(<span class="var">df</span>, <span class="var">multiplier</span><span class="op">=</span><span class="num">1.5</span>):
+    <span class="var">outlier_report</span> <span class="op">=</span> {}
+    <span class="kw">for</span> <span class="var">col</span> <span class="kw">in</span> <span class="var">df</span>.<span class="fn">select_dtypes</span>(<span class="str">'number'</span>).<span class="fn">columns</span>:
+        <span class="var">Q1</span>, <span class="var">Q3</span> <span class="op">=</span> <span class="var">df</span>[<span class="var">col</span>].<span class="fn">quantile</span>([<span class="num">0.25</span>, <span class="num">0.75</span>])
+        <span class="var">IQR</span> <span class="op">=</span> <span class="var">Q3</span> <span class="op">-</span> <span class="var">Q1</span>
+        <span class="var">n_out</span> <span class="op">=</span> ((<span class="var">df</span>[<span class="var">col</span>] <span class="op"><</span> <span class="var">Q1</span> <span class="op">-</span> <span class="var">multiplier</span><span class="op">*</span><span class="var">IQR</span>) <span class="op">|</span>
+                  (<span class="var">df</span>[<span class="var">col</span>] <span class="op">></span> <span class="var">Q3</span> <span class="op">+</span> <span class="var">multiplier</span><span class="op">*</span><span class="var">IQR</span>)).<span class="fn">sum</span>()
+        <span class="kw">if</span> <span class="var">n_out</span> <span class="op">></span> <span class="num">0</span>:
+            <span class="var">outlier_report</span>[<span class="var">col</span>] <span class="op">=</span> <span class="var">n_out</span>
+    <span class="kw">return</span> <span class="var">outlier_report</span></pre>
+      </div>
+    </div>
+
+    <div class="card span2">
+      <div class="card-header">
+        <span class="card-title">Checklist de Hallazgos EDA — Guía de Decisiones</span>
+        <span class="card-icon">🗺</span>
+      </div>
+      <div class="card-body">
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th>Hallazgo en EDA</th>
+              <th>Diagnóstico</th>
+              <th>Acción en Preprocesamiento</th>
+              <th>Impacto en Modelo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Missing &gt; 50% en feature</td>
+              <td><span class="tag tag-red">CRÍTICO</span></td>
+              <td>Eliminar columna (justificar) o imputar con técnica avanzada (MICE)</td>
+              <td>Alto</td>
+            </tr>
+            <tr>
+              <td>Missing 5–50%</td>
+              <td><span class="tag tag-yellow">MODERADO</span></td>
+              <td>KNNImputer, IterativeImputer, o crear flag binario "era_missing"</td>
+              <td>Medio</td>
+            </tr>
+            <tr>
+              <td>Missing &lt; 5%</td>
+              <td><span class="tag tag-green">BAJO</span></td>
+              <td>Imputar media/mediana (numérica) o moda (categórica)</td>
+              <td>Bajo</td>
+            </tr>
+            <tr>
+              <td>Asimetría |skew| &gt; 2</td>
+              <td><span class="tag tag-yellow">IMPORTANTE</span></td>
+              <td>log1p(), sqrt(), Box-Cox, Yeo-Johnson. Aplica solo a features, no a y.</td>
+              <td>Alto para modelos lineales/NN</td>
+            </tr>
+            <tr>
+              <td>VIF &gt; 10 entre features</td>
+              <td><span class="tag tag-yellow">MODERADO</span></td>
+              <td>Eliminar una, combinar en ratio, o usar Ridge/Lasso regularizados</td>
+              <td>Alto para regresión lineal</td>
+            </tr>
+            <tr>
+              <td>Cardinalidad categórica &gt; 50</td>
+              <td><span class="tag tag-yellow">MODERADO</span></td>
+              <td>Target Encoding, Frequency Encoding, o agrupar categorías raras</td>
+              <td>OHE explota dimensiones</td>
+            </tr>
+            <tr>
+              <td>Clase minoritaria &lt; 10%</td>
+              <td><span class="tag tag-red">CRÍTICO</span></td>
+              <td>SMOTE (train only), class_weight="balanced", evaluar con AUC-PR</td>
+              <td>Accuracy inútil como métrica</td>
+            </tr>
+            <tr>
+              <td>Tendencia temporal en features</td>
+              <td><span class="tag tag-yellow">IMPORTANTE</span></td>
+              <td>Usar TimeSeriesSplit, no KFold aleatorio</td>
+              <td>Data leakage temporal si no se controla</td>
+            </tr>
+            <tr>
+              <td>Outliers &gt; 5% en feature</td>
+              <td><span class="tag tag-yellow">CONTEXTUAL</span></td>
+              <td>RobustScaler, Winsorización, o models robustos (trees, GBM)</td>
+              <td>Alto para modelos basados en distancia (KNN, SVM)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 3: PREPROCESAMIENTO
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-3">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 03 · Preprocessing + Split</div>
+      <h2 class="section-title">Preprocesamiento<br>y División de Datos</h2>
+      <p class="section-desc">La fase más crítica para evitar data leakage. El split es el primer paso, no el último.</p>
+    </div>
+    <span class="section-badge badge-required">ANTI-LEAKAGE</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card span2">
+      <div class="card-header">
+        <span class="card-title">Pipeline de Preprocesamiento — Orden Correcto</span>
+        <span class="card-icon">⚙</span>
+      </div>
+      <div class="card-body">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap">
+          <div style="padding:10px 16px; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--danger)">1. RAW DATA</div>
+          <span style="color:var(--text-muted)">→</span>
+          <div style="padding:10px 16px; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--danger)">2. TRAIN/TEST SPLIT ← PRIMERO</div>
+          <span style="color:var(--text-muted)">→</span>
+          <div style="padding:10px 16px; background:rgba(110,231,183,0.08); border:1px solid rgba(110,231,183,0.2); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent)">3. FIT PREPROC (solo train)</div>
+          <span style="color:var(--text-muted)">→</span>
+          <div style="padding:10px 16px; background:rgba(110,231,183,0.08); border:1px solid rgba(110,231,183,0.2); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent)">4. TRANSFORM train + test</div>
+        </div>
+
+        <pre><span class="imp">from sklearn.model_selection import train_test_split, TimeSeriesSplit</span>
+<span class="imp">from sklearn.pipeline import Pipeline</span>
+<span class="imp">from sklearn.compose import ColumnTransformer</span>
+<span class="imp">from sklearn.preprocessing import (StandardScaler, MinMaxScaler,
+                                    RobustScaler, OneHotEncoder,
+                                    PolynomialFeatures, FunctionTransformer)</span>
+<span class="imp">from sklearn.impute import SimpleImputer, KNNImputer</span>
+
+<span class="var">RANDOM_STATE</span> <span class="op">=</span> <span class="num">42</span>
+
+<span class="cm"># ── PASO 1: SPLIT (SIEMPRE PRIMERO) ───────────────────────</span>
+<span class="cm"># Para datos independientes (NO series de tiempo):</span>
+<span class="var">X_train</span>, <span class="var">X_test</span>, <span class="var">y_train</span>, <span class="var">y_test</span> <span class="op">=</span> <span class="fn">train_test_split</span>(
+    <span class="var">X</span>, <span class="var">y</span>,
+    <span class="var">test_size</span><span class="op">=</span><span class="num">0.20</span>,          <span class="cm"># 80/20</span>
+    <span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>,
+    <span class="var">stratify</span><span class="op">=</span><span class="var">y</span>               <span class="cm"># solo en clasificación</span>
+)
+
+<span class="cm"># Para series de tiempo (orden cronológico estricto):</span>
+<span class="var">n</span> <span class="op">=</span> <span class="fn">len</span>(<span class="var">df_ts</span>)
+<span class="var">split_idx</span> <span class="op">=</span> <span class="fn">int</span>(<span class="var">n</span> <span class="op">*</span> <span class="num">0.8</span>)
+<span class="var">X_train_ts</span> <span class="op">=</span> <span class="var">df_ts</span>.<span class="fn">iloc</span>[:<span class="var">split_idx</span>]
+<span class="var">X_test_ts</span>  <span class="op">=</span> <span class="var">df_ts</span>.<span class="fn">iloc</span>[<span class="var">split_idx</span>:]   <span class="cm"># NUNCA train_test_split</span>
+
+<span class="cm"># ── PASO 2: DEFINIR TRANSFORMADORES POR TIPO DE COLUMNA ──</span>
+<span class="var">numeric_features</span>  <span class="op">=</span> <span class="var">X_train</span>.<span class="fn">select_dtypes</span>(<span class="fn">include</span><span class="op">=</span>[<span class="str">'number'</span>]).<span class="fn">columns</span>
+<span class="var">categoric_features</span> <span class="op">=</span> <span class="var">X_train</span>.<span class="fn">select_dtypes</span>(<span class="fn">include</span><span class="op">=</span>[<span class="str">'object'</span>, <span class="str">'category'</span>]).<span class="fn">columns</span>
+
+<span class="cm"># Pipeline numérico</span>
+<span class="var">numeric_transformer</span> <span class="op">=</span> <span class="cls">Pipeline</span>(<span class="fn">steps</span><span class="op">=</span>[
+    (<span class="str">'imputer'</span>, <span class="cls">KNNImputer</span>(<span class="var">n_neighbors</span><span class="op">=</span><span class="num">5</span>)),    <span class="cm"># o SimpleImputer(strategy='median')</span>
+    (<span class="str">'scaler'</span>,  <span class="cls">RobustScaler</span>())                  <span class="cm"># RobustScaler: robusto a outliers</span>
+])
+
+<span class="cm"># Pipeline categórico</span>
+<span class="var">categorical_transformer</span> <span class="op">=</span> <span class="cls">Pipeline</span>(<span class="fn">steps</span><span class="op">=</span>[
+    (<span class="str">'imputer'</span>, <span class="cls">SimpleImputer</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'most_frequent'</span>)),
+    (<span class="str">'encoder'</span>, <span class="cls">OneHotEncoder</span>(<span class="var">handle_unknown</span><span class="op">=</span><span class="str">'ignore'</span>, <span class="var">sparse_output</span><span class="op">=</span><span class="cls">False</span>))
+])
+
+<span class="cm"># ColumnTransformer: aplica cada pipeline a su columna correspondiente</span>
+<span class="var">preprocessor</span> <span class="op">=</span> <span class="cls">ColumnTransformer</span>(<span class="fn">transformers</span><span class="op">=</span>[
+    (<span class="str">'num'</span>, <span class="var">numeric_transformer</span>,  <span class="var">numeric_features</span>),
+    (<span class="str">'cat'</span>, <span class="var">categorical_transformer</span>, <span class="var">categoric_features</span>),
+], <span class="var">remainder</span><span class="op">=</span><span class="str">'drop'</span>)</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Guía de Selección de Scaler</span>
+        <span class="card-icon">⚖</span>
+      </div>
+      <div class="card-body">
+        <table class="decision-table">
+          <thead>
+            <tr><th>Scaler</th><th>Cuándo usarlo</th><th>Algoritmos</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-teal">StandardScaler</span></td>
+              <td>Features aproximadamente normales, sin outliers extremos</td>
+              <td>SVM, Logistic Reg, Redes Neuronales, PCA</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-blue">MinMaxScaler</span></td>
+              <td>Cuando el rango importa (0-1 requerido), datos acotados</td>
+              <td>NN con activación sigmoide, KNN en espacios acotados</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-yellow">RobustScaler</span></td>
+              <td>Datos con outliers significativos (usa IQR en vez de std)</td>
+              <td>Cualquier algoritmo sensible a escala con datos sucios</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-green">Ninguno</span></td>
+              <td>Algoritmos invariantes a escala</td>
+              <td>Decision Trees, Random Forest, GBM, XGBoost</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Manejo de Desbalance de Clases</span>
+        <span class="card-icon">⚖</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">from imblearn.over_sampling import SMOTE</span>
+<span class="imp">from imblearn.under_sampling import NearMiss</span>
+<span class="imp">from imblearn.pipeline import Pipeline as ImbPipeline</span>
+
+<span class="cm"># ¡IMPORTANTE! SMOTE solo en datos de ENTRENAMIENTO</span>
+<span class="cm"># Nunca en test (contaminaría la evaluación real)</span>
+
+<span class="kw">def</span> <span class="fn">check_class_balance</span>(<span class="var">y</span>, <span class="var">threshold</span><span class="op">=</span><span class="num">0.1</span>):
+    <span class="var">counts</span> <span class="op">=</span> <span class="cls">pd</span>.<span class="cls">Series</span>(<span class="var">y</span>).<span class="fn">value_counts</span>(<span class="var">normalize</span><span class="op">=</span><span class="cls">True</span>)
+    <span class="var">min_class_ratio</span> <span class="op">=</span> <span class="var">counts</span>.<span class="fn">min</span>()
+    <span class="kw">if</span> <span class="var">min_class_ratio</span> <span class="op"><</span> <span class="var">threshold</span>:
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n🚨 DESBALANCE CRÍTICO: clase minoritaria = {min_class_ratio:.1%}"</span>)
+        <span class="fn">print</span>(<span class="str">"   Acciones recomendadas:"</span>)
+        <span class="fn">print</span>(<span class="str">"   1. class_weight='balanced' en el clasificador"</span>)
+        <span class="fn">print</span>(<span class="str">"   2. SMOTE sobre X_train solamente"</span>)
+        <span class="fn">print</span>(<span class="str">"   3. Usar AUC-PR como métrica principal (no Accuracy)"</span>)
+    <span class="kw">return</span> <span class="var">counts</span>
+
+<span class="cm"># Pipeline con SMOTE integrado (correcto)</span>
+<span class="kw">from</span> <span class="imp">sklearn.ensemble</span> <span class="kw">import</span> <span class="cls">RandomForestClassifier</span>
+<span class="var">balanced_pipe</span> <span class="op">=</span> <span class="cls">ImbPipeline</span>([
+    (<span class="str">'preproc'</span>,  <span class="var">preprocessor</span>),
+    (<span class="str">'smote'</span>,    <span class="cls">SMOTE</span>(<span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>)),
+    (<span class="str">'clf'</span>,      <span class="cls">RandomForestClassifier</span>(<span class="var">class_weight</span><span class="op">=</span><span class="str">'balanced'</span>))
+])</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 4: MODELADO
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-4">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 04 · Modeling + Hyperparameter Tuning</div>
+      <h2 class="section-title">Baseline + Modelado<br>+ Optimización</h2>
+      <p class="section-desc">Siempre empieza con el modelo más simple. La complejidad solo se justifica cuando el baseline queda insuficiente.</p>
+    </div>
+    <span class="section-badge badge-required">OBLIGATORIO</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card span2">
+      <div class="card-header">
+        <span class="card-title">Estrategia de Modelado — Del Más Simple al Más Complejo</span>
+        <span class="card-icon">📈</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">from sklearn.pipeline import Pipeline</span>
+<span class="imp">from sklearn.dummy import DummyRegressor, DummyClassifier</span>
+<span class="imp">from sklearn.linear_model import (LinearRegression, Ridge, Lasso,
+                                    LogisticRegression)</span>
+<span class="imp">from sklearn.ensemble import (RandomForestRegressor, RandomForestClassifier,
+                               GradientBoostingRegressor, GradientBoostingClassifier)</span>
+<span class="imp">from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSearchCV</span>
+<span class="imp">from sklearn.metrics import make_scorer</span>
+
+<span class="cm"># ── PASO 1: BASELINE (OBLIGATORIO) ────────────────────────</span>
+<span class="cm"># Regresión: predecir siempre la media del training set</span>
+<span class="var">baseline_reg</span> <span class="op">=</span> <span class="cls">Pipeline</span>([
+    (<span class="str">'preproc'</span>, <span class="var">preprocessor</span>),
+    (<span class="str">'model'</span>,   <span class="cls">DummyRegressor</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'mean'</span>))
+])
+<span class="cm"># Clasificación: predecir siempre la clase mayoritaria</span>
+<span class="var">baseline_clf</span> <span class="op">=</span> <span class="cls">Pipeline</span>([
+    (<span class="str">'preproc'</span>, <span class="var">preprocessor</span>),
+    (<span class="str">'model'</span>,   <span class="cls">DummyClassifier</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'most_frequent'</span>))
+])
+
+<span class="cm"># ── PASO 2: PORTAFOLIO DE MODELOS ─────────────────────────</span>
+<span class="var">models_regression</span> <span class="op">=</span> {
+    <span class="str">"LinearReg"</span>: <span class="cls">LinearRegression</span>(),
+    <span class="str">"Ridge"</span>:     <span class="cls">Ridge</span>(<span class="var">alpha</span><span class="op">=</span><span class="num">1.0</span>),
+    <span class="str">"RandomForest"</span>: <span class="cls">RandomForestRegressor</span>(<span class="var">n_estimators</span><span class="op">=</span><span class="num">200</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>),
+    <span class="str">"GradientBoosting"</span>: <span class="cls">GradientBoostingRegressor</span>(<span class="var">n_estimators</span><span class="op">=</span><span class="num">200</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>),
+}
+
+<span class="cm"># ── PASO 3: COMPARACIÓN CON CROSS-VALIDATION ─────────────</span>
+<span class="var">results</span> <span class="op">=</span> {}
+<span class="kw">for</span> <span class="var">name</span>, <span class="var">model</span> <span class="kw">in</span> <span class="var">models_regression</span>.<span class="fn">items</span>():
+    <span class="var">pipe</span> <span class="op">=</span> <span class="cls">Pipeline</span>([(<span class="str">'preproc'</span>, <span class="var">preprocessor</span>), (<span class="str">'model'</span>, <span class="var">model</span>)])
+    <span class="var">cv_scores</span> <span class="op">=</span> <span class="fn">cross_val_score</span>(
+        <span class="var">pipe</span>, <span class="var">X_train</span>, <span class="var">y_train</span>,
+        <span class="var">cv</span><span class="op">=</span><span class="num">5</span>,                    <span class="cm"># KFold(5) para datos iid</span>
+        <span class="var">scoring</span><span class="op">=</span><span class="str">'neg_root_mean_squared_error'</span>,
+        <span class="var">n_jobs</span><span class="op">=</span><span class="op">-</span><span class="num">1</span>
+    )
+    <span class="var">results</span>[<span class="var">name</span>] <span class="op">=</span> {
+        <span class="str">"mean"</span>: <span class="fn">abs</span>(<span class="var">cv_scores</span>.<span class="fn">mean</span>()),
+        <span class="str">"std"</span>:  <span class="var">cv_scores</span>.<span class="fn">std</span>()
+    }
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{name:<20} RMSE = {abs(cv_scores.mean()):.4f} ± {cv_scores.std():.4f}"</span>)
+
+<span class="cm"># ── PASO 4: TUNING DEL MEJOR MODELO ──────────────────────</span>
+<span class="cm"># Usar prefijo 'model__' para parámetros del paso 'model'</span>
+<span class="var">param_grid</span> <span class="op">=</span> {
+    <span class="str">'model__n_estimators'</span>:    [<span class="num">100</span>, <span class="num">300</span>, <span class="num">500</span>],
+    <span class="str">'model__max_depth'</span>:       [<span class="cls">None</span>, <span class="num">5</span>, <span class="num">10</span>, <span class="num">20</span>],
+    <span class="str">'model__min_samples_leaf'</span>: [<span class="num">1</span>, <span class="num">5</span>, <span class="num">10</span>],
+    <span class="str">'model__max_features'</span>:    [<span class="str">'sqrt'</span>, <span class="str">'log2'</span>, <span class="num">0.5</span>]
+}
+
+<span class="var">best_pipe</span> <span class="op">=</span> <span class="cls">Pipeline</span>([
+    (<span class="str">'preproc'</span>, <span class="var">preprocessor</span>),
+    (<span class="str">'model'</span>,   <span class="cls">RandomForestRegressor</span>(<span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>))
+])
+
+<span class="var">search</span> <span class="op">=</span> <span class="cls">RandomizedSearchCV</span>(
+    <span class="var">best_pipe</span>, <span class="var">param_grid</span>,
+    <span class="var">n_iter</span><span class="op">=</span><span class="num">30</span>,              <span class="cm"># 30 combinaciones aleatorias</span>
+    <span class="var">cv</span><span class="op">=</span><span class="num">5</span>,
+    <span class="var">scoring</span><span class="op">=</span><span class="str">'neg_root_mean_squared_error'</span>,
+    <span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>,
+    <span class="var">n_jobs</span><span class="op">=</span><span class="op">-</span><span class="num">1</span>,
+    <span class="var">verbose</span><span class="op">=</span><span class="num">1</span>
+)
+<span class="var">search</span>.<span class="fn">fit</span>(<span class="var">X_train</span>, <span class="var">y_train</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Mejores params: {search.best_params_}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Mejor CV score: {abs(search.best_score_):.4f}"</span>)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 5: EVALUACIÓN
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-5">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 05 · Comprehensive Evaluation</div>
+      <h2 class="section-title">Evaluación<br>Multi-Métrica</h2>
+      <p class="section-desc">Reporta siempre en train, validation y test. Una sola métrica nunca cuenta la historia completa.</p>
+    </div>
+    <span class="section-badge badge-required">OBLIGATORIO</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Evaluación Regresión — Suite Completa</span>
+        <span class="card-icon">📉</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">from sklearn.metrics import (mean_squared_error, mean_absolute_error,
+                               mean_absolute_percentage_error, r2_score)</span>
+<span class="imp">import numpy as np</span>
+
+<span class="kw">def</span> <span class="fn">regression_report</span>(<span class="var">y_true</span>, <span class="var">y_pred</span>, <span class="var">label</span><span class="op">=</span><span class="str">"SET"</span>):
+    <span class="var">rmse</span>  <span class="op">=</span> <span class="fn">np.sqrt</span>(<span class="fn">mean_squared_error</span>(<span class="var">y_true</span>, <span class="var">y_pred</span>))
+    <span class="var">mae</span>   <span class="op">=</span> <span class="fn">mean_absolute_error</span>(<span class="var">y_true</span>, <span class="var">y_pred</span>)
+    <span class="var">mape</span>  <span class="op">=</span> <span class="fn">mean_absolute_percentage_error</span>(<span class="var">y_true</span>, <span class="var">y_pred</span>) <span class="op">*</span> <span class="num">100</span>
+    <span class="var">r2</span>    <span class="op">=</span> <span class="fn">r2_score</span>(<span class="var">y_true</span>, <span class="var">y_pred</span>)
+    <span class="var">pbias</span> <span class="op">=</span> <span class="num">100</span> <span class="op">*</span> (<span class="fn">np.sum</span>(<span class="var">y_pred</span> <span class="op">-</span> <span class="var">y_true</span>) <span class="op">/</span> <span class="fn">np.sum</span>(<span class="var">y_true</span>))  <span class="cm"># PBIAS</span>
+
+    <span class="cm"># NSE (Nash-Sutcliffe Efficiency) — estándar hidrológico</span>
+    <span class="var">nse</span> <span class="op">=</span> <span class="num">1</span> <span class="op">-</span> (<span class="fn">np.sum</span>((<span class="var">y_true</span> <span class="op">-</span> <span class="var">y_pred</span>)<span class="op">**</span><span class="num">2</span>) <span class="op">/</span>
+               <span class="fn">np.sum</span>((<span class="var">y_true</span> <span class="op">-</span> <span class="fn">np.mean</span>(<span class="var">y_true</span>))<span class="op">**</span><span class="num">2</span>))
+
+    <span class="cm"># KGE (Kling-Gupta Efficiency)</span>
+    <span class="var">r</span>     <span class="op">=</span> <span class="fn">np.corrcoef</span>(<span class="var">y_true</span>, <span class="var">y_pred</span>)[<span class="num">0</span>, <span class="num">1</span>]
+    <span class="var">alpha</span> <span class="op">=</span> <span class="fn">np.std</span>(<span class="var">y_pred</span>) <span class="op">/</span> <span class="fn">np.std</span>(<span class="var">y_true</span>)
+    <span class="var">beta</span>  <span class="op">=</span> <span class="fn">np.mean</span>(<span class="var">y_pred</span>) <span class="op">/</span> <span class="fn">np.mean</span>(<span class="var">y_true</span>)
+    <span class="var">kge</span>   <span class="op">=</span> <span class="num">1</span> <span class="op">-</span> <span class="fn">np.sqrt</span>((<span class="var">r</span><span class="op">-</span><span class="num">1</span>)<span class="op">**</span><span class="num">2</span> <span class="op">+</span> (<span class="var">alpha</span><span class="op">-</span><span class="num">1</span>)<span class="op">**</span><span class="num">2</span> <span class="op">+</span> (<span class="var">beta</span><span class="op">-</span><span class="num">1</span>)<span class="op">**</span><span class="num">2</span>)
+
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n{'═'*40}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  REPORTE DE EVALUACIÓN — {label}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">{'═'*40}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  RMSE  : {rmse:.4f}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  MAE   : {mae:.4f}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  MAPE  : {mape:.2f}%"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  R²    : {r2:.4f}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  PBIAS : {pbias:.2f}%"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  NSE   : {nse:.4f} {'✓' if nse > 0.65 else '✗'}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  KGE   : {kge:.4f} {'✓' if kge > 0.65 else '✗'}"</span>)
+    <span class="kw">return</span> {<span class="str">"rmse"</span>:<span class="var">rmse</span>, <span class="str">"nse"</span>:<span class="var">nse</span>, <span class="str">"kge"</span>:<span class="var">kge</span>, <span class="str">"r2"</span>:<span class="var">r2</span>, <span class="str">"pbias"</span>:<span class="var">pbias</span>}
+
+<span class="cm"># Uso</span>
+<span class="fn">regression_report</span>(<span class="var">y_train</span>, <span class="var">model</span>.<span class="fn">predict</span>(<span class="var">X_train</span>), <span class="str">"TRAIN"</span>)
+<span class="fn">regression_report</span>(<span class="var">y_test</span>,  <span class="var">model</span>.<span class="fn">predict</span>(<span class="var">X_test</span>),  <span class="str">"TEST"</span>)</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Evaluación Clasificación — Suite Completa</span>
+        <span class="card-icon">🎯</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">from sklearn.metrics import (classification_report, confusion_matrix,
+                               roc_auc_score, average_precision_score,
+                               ConfusionMatrixDisplay)</span>
+
+<span class="kw">def</span> <span class="fn">classification_full_report</span>(<span class="var">model</span>, <span class="var">X</span>, <span class="var">y</span>, <span class="var">label</span><span class="op">=</span><span class="str">"SET"</span>):
+    <span class="var">y_pred</span>  <span class="op">=</span> <span class="var">model</span>.<span class="fn">predict</span>(<span class="var">X</span>)
+    <span class="var">y_proba</span> <span class="op">=</span> <span class="var">model</span>.<span class="fn">predict_proba</span>(<span class="var">X</span>)
+
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n{'═'*50}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  REPORTE DE CLASIFICACIÓN — {label}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">{'═'*50}"</span>)
+
+    <span class="cm"># Reporte por clase</span>
+    <span class="fn">print</span>(<span class="fn">classification_report</span>(<span class="var">y</span>, <span class="var">y_pred</span>))
+
+    <span class="cm"># AUC-ROC (macro para multiclase)</span>
+    <span class="kw">try</span>:
+        <span class="var">auc_roc</span> <span class="op">=</span> <span class="fn">roc_auc_score</span>(<span class="var">y</span>, <span class="var">y_proba</span>,
+                                  <span class="var">multi_class</span><span class="op">=</span><span class="str">'ovr'</span>, <span class="var">average</span><span class="op">=</span><span class="str">'macro'</span>)
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  AUC-ROC (macro): {auc_roc:.4f}"</span>)
+    <span class="kw">except</span>:
+        <span class="kw">pass</span>
+
+    <span class="cm"># Verifica si modelo es mejor que baseline mayoritario</span>
+    <span class="kw">from</span> <span class="imp">sklearn.dummy</span> <span class="kw">import</span> <span class="cls">DummyClassifier</span>
+    <span class="var">dummy</span> <span class="op">=</span> <span class="cls">DummyClassifier</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'most_frequent'</span>).<span class="fn">fit</span>(<span class="var">X</span>, <span class="var">y</span>)
+    <span class="var">dummy_acc</span> <span class="op">=</span> (<span class="var">dummy</span>.<span class="fn">predict</span>(<span class="var">X</span>) <span class="op">==</span> <span class="var">y</span>).<span class="fn">mean</span>()
+    <span class="var">model_acc</span> <span class="op">=</span> (<span class="var">y_pred</span> <span class="op">==</span> <span class="var">y</span>).<span class="fn">mean</span>()
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n  Accuracy modelo:   {model_acc:.4f}"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  Accuracy baseline: {dummy_acc:.4f}"</span>)
+    <span class="var">improvement</span> <span class="op">=</span> (<span class="var">model_acc</span> <span class="op">-</span> <span class="var">dummy_acc</span>) <span class="op">/</span> <span class="var">dummy_acc</span> <span class="op">*</span> <span class="num">100</span>
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  Mejora relativa:   {improvement:.1f}%"</span>)
+
+<span class="cm"># Diagnóstico de overfitting</span>
+<span class="kw">def</span> <span class="fn">overfit_check</span>(<span class="var">score_train</span>, <span class="var">score_val</span>, <span class="var">metric</span><span class="op">=</span><span class="str">"metric"</span>, <span class="var">threshold</span><span class="op">=</span><span class="num">0.10</span>):
+    <span class="var">gap</span> <span class="op">=</span> <span class="var">score_train</span> <span class="op">-</span> <span class="var">score_val</span>
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n  [{metric}] Train: {score_train:.4f} | Val: {score_val:.4f} | Gap: {gap:.4f}"</span>)
+    <span class="kw">if</span> <span class="var">gap</span> <span class="op">></span> <span class="var">threshold</span>:
+        <span class="fn">print</span>(<span class="str">"  ⚠ POSIBLE OVERFITTING → aumentar regularización o datos"</span>)
+    <span class="kw">elif</span> <span class="var">gap</span> <span class="op"><</span> <span class="op">-</span><span class="var">threshold</span>:
+        <span class="fn">print</span>(<span class="str">"  ⚠ POSIBLE UNDERFITTING → reducir regularización o modelo más complejo"</span>)
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">"  ✓ Generalización saludable"</span>)</pre>
+      </div>
+    </div>
+
+    <div class="card span2">
+      <div class="card-header">
+        <span class="card-title">Umbrales de Calidad y Diagnósticos</span>
+        <span class="card-icon">🩺</span>
+      </div>
+      <div class="card-body">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-name">NSE / KGE</div>
+            <div class="metric-formula">> 0.75 Excelente<br>> 0.65 Bueno<br>> 0.50 Satisfactorio<br>< 0.50 No satisfactorio</div>
+            <div class="metric-desc">Estándar hidrológico internacional (WMO)</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-name">PBIAS</div>
+            <div class="metric-formula">|PBIAS| < 10% Muy bien<br>|PBIAS| < 25% Bueno<br>> 25% Sesgo alto</div>
+            <div class="metric-desc">Sesgo porcentual. Positivo = sobreestimación</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-name">GAP Train-Test</div>
+            <div class="metric-formula">< 5% Normal<br>5–15% Vigilar<br>> 15% Overfitting</div>
+            <div class="metric-desc">Diferencia entre score de entrenamiento y test</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-name">AUC-ROC</div>
+            <div class="metric-formula">> 0.90 Excelente<br>> 0.80 Bueno<br>> 0.70 Aceptable<br>0.50 Aleatorio</div>
+            <div class="metric-desc">Discriminación global. Insensible a desbalance</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-name">AUC-PR</div>
+            <div class="metric-formula">Mejor que proporción de clase positiva → modelo útil</div>
+            <div class="metric-desc">Preferible a AUC-ROC en clases muy desbalanceadas</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-name">F1-Score</div>
+            <div class="metric-formula">> 0.85 Excelente<br>> 0.70 Bueno<br>> 0.50 Aceptable</div>
+            <div class="metric-desc">Harmónica de Precision y Recall. Útil con desbalance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 6: INTERPRETABILIDAD
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-6">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 06 · Explainability + SHAP</div>
+      <h2 class="section-title">Interpretabilidad<br>del Modelo</h2>
+      <p class="section-desc">¿Por qué predice lo que predice? Obligatorio en contextos de auditoría, seguridad o decisiones críticas.</p>
+    </div>
+    <span class="section-badge badge-adaptive">CONTEXTUAL</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Feature Importance + SHAP Analysis</span>
+        <span class="card-icon">🧠</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">import shap</span>
+<span class="imp">import matplotlib.pyplot as plt</span>
+<span class="imp">from sklearn.inspection import permutation_importance</span>
+
+<span class="cm"># ── 1. IMPORTANCIA POR PERMUTACIÓN (model-agnostic) ──────</span>
+<span class="cm"># Más fiable que feature_importance_ para Random Forest</span>
+<span class="var">perm_imp</span> <span class="op">=</span> <span class="fn">permutation_importance</span>(
+    <span class="var">model</span>, <span class="var">X_test</span>, <span class="var">y_test</span>,
+    <span class="var">n_repeats</span><span class="op">=</span><span class="num">30</span>,               <span class="cm"># 30 permutaciones → IC estable</span>
+    <span class="var">random_state</span><span class="op">=</span><span class="var">RANDOM_STATE</span>
+)
+<span class="var">perm_df</span> <span class="op">=</span> <span class="cls">pd</span>.<span class="cls">DataFrame</span>({
+    <span class="str">'feature'</span>:    <span class="var">feature_names</span>,
+    <span class="str">'importance'</span>: <span class="var">perm_imp</span>.<span class="var">importances_mean</span>,
+    <span class="str">'std'</span>:        <span class="var">perm_imp</span>.<span class="var">importances_std</span>
+}).<span class="fn">sort_values</span>(<span class="str">'importance'</span>, <span class="var">ascending</span><span class="op">=</span><span class="cls">False</span>)
+<span class="fn">print</span>(<span class="var">perm_df</span>.<span class="fn">head</span>(<span class="num">15</span>))
+
+<span class="cm"># ── 2. SHAP VALUES (para modelos de árbol) ────────────────</span>
+<span class="var">explainer</span> <span class="op">=</span> <span class="cls">shap</span>.<span class="cls">TreeExplainer</span>(<span class="var">model</span>)  <span class="cm"># para RF, GBM, XGBoost</span>
+<span class="cm"># shap.LinearExplainer → modelos lineales</span>
+<span class="cm"># shap.KernelExplainer → cualquier modelo (lento)</span>
+
+<span class="var">shap_values</span> <span class="op">=</span> <span class="var">explainer</span>(<span class="var">X_test</span>)
+
+<span class="cm"># Gráfico de resumen: importancia global</span>
+<span class="fn">shap.summary_plot</span>(<span class="var">shap_values</span>, <span class="var">X_test</span>,
+                   <span class="var">feature_names</span><span class="op">=</span><span class="var">feature_names</span>)
+
+<span class="cm"># Gráfico de dependencia: efecto de una variable</span>
+<span class="fn">shap.dependence_plot</span>(<span class="str">"precipitation_mm"</span>, <span class="var">shap_values</span>.<span class="fn">values</span>, <span class="var">X_test</span>)
+
+<span class="cm"># Explicación de una predicción individual</span>
+<span class="fn">shap.waterfall_plot</span>(<span class="var">shap_values</span>[<span class="num">0</span>])  <span class="cm"># primera observación del test</span>
+
+<span class="cm"># ── 3. ANÁLISIS DE RESIDUOS ───────────────────────────────</span>
+<span class="var">residuals</span> <span class="op">=</span> <span class="var">y_test</span> <span class="op">-</span> <span class="var">model</span>.<span class="fn">predict</span>(<span class="var">X_test</span>)
+<span class="fn">fig</span>, <span class="fn">axes</span> <span class="op">=</span> <span class="fn">plt.subplots</span>(<span class="num">1</span>, <span class="num">3</span>, <span class="var">figsize</span><span class="op">=</span>(<span class="num">15</span>, <span class="num">4</span>))
+
+<span class="cm"># Residuos vs predichos → detecta heterocedasticidad</span>
+<span class="var">axes</span>[<span class="num">0</span>].<span class="fn">scatter</span>(<span class="var">model</span>.<span class="fn">predict</span>(<span class="var">X_test</span>), <span class="var">residuals</span>, <span class="var">alpha</span><span class="op">=</span><span class="num">0.4</span>)
+<span class="var">axes</span>[<span class="num">0</span>].<span class="fn">axhline</span>(<span class="num">0</span>, <span class="var">color</span><span class="op">=</span><span class="str">'r'</span>)
+<span class="var">axes</span>[<span class="num">0</span>].<span class="fn">set_title</span>(<span class="str">'Residuos vs Predichos'</span>)
+
+<span class="cm"># QQ-plot → verifica normalidad de residuos</span>
+<span class="kw">from</span> <span class="imp">scipy</span> <span class="kw">import</span> <span class="var">stats</span>
+<span class="fn">stats.probplot</span>(<span class="var">residuals</span>, <span class="var">dist</span><span class="op">=</span><span class="str">"norm"</span>, <span class="var">plot</span><span class="op">=</span><span class="var">axes</span>[<span class="num">1</span>])
+<span class="var">axes</span>[<span class="num">1</span>].<span class="fn">set_title</span>(<span class="str">'Q-Q Plot de Residuos'</span>)
+<span class="fn">plt.tight_layout</span>()</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Cuándo usar cada método de interpretabilidad</span>
+        <span class="card-icon">🔭</span>
+      </div>
+      <div class="card-body">
+        <table class="decision-table">
+          <thead>
+            <tr><th>Método</th><th>Tipo de Modelo</th><th>Escala</th><th>Cuándo usarlo</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Coeficientes</strong></td>
+              <td>Lineales solo</td>
+              <td>Global</td>
+              <td>Regresión/Logística: efecto directo e interpretable</td>
+            </tr>
+            <tr>
+              <td><strong>feature_importances_</strong></td>
+              <td>Trees/RF/GBM</td>
+              <td>Global</td>
+              <td>Primer vistazo rápido, pero sesgado hacia features con muchos valores únicos</td>
+            </tr>
+            <tr>
+              <td><strong>Permutation Importance</strong></td>
+              <td>Cualquiera</td>
+              <td>Global</td>
+              <td>Alternativa robusta a feature_importances_, usa datos de test</td>
+            </tr>
+            <tr>
+              <td><strong>SHAP TreeExplainer</strong></td>
+              <td>Trees/RF/GBM/XGB</td>
+              <td>Global + Local</td>
+              <td>Auditorías, modelos en producción, contextos regulados</td>
+            </tr>
+            <tr>
+              <td><strong>SHAP KernelExplainer</strong></td>
+              <td>Cualquiera</td>
+              <td>Local</td>
+              <td>Modelos caja negra (NN, SVM), más lento</td>
+            </tr>
+            <tr>
+              <td><strong>LIME</strong></td>
+              <td>Cualquiera</td>
+              <td>Local</td>
+              <td>Explicación de predicciones individuales, alternativa a SHAP</td>
+            </tr>
+            <tr>
+              <td><strong>PDP/ICE Plots</strong></td>
+              <td>Cualquiera</td>
+              <td>Global</td>
+              <td>Efecto marginal de una variable, detecta interacciones no lineales</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert alert-warn" style="margin-top:20px">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-content">
+            <strong>SHAP es obligatorio en contextos de auditoría.</strong>
+            Para aplicaciones de infraestructura crítica (presas, alertas de inundación, sistemas de salud), los tomadores de decisión necesitan saber <em>por qué</em> el modelo hace una predicción específica, no solo cuán preciso es globalmente.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 7: PRODUCCIÓN
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-7">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 07 · Production + Monitoring</div>
+      <h2 class="section-title">Pipeline de Producción<br>y Monitoreo</h2>
+      <p class="section-desc">El modelo entrenado no es el final. En producción, los datos cambian y el modelo se degrada.</p>
+    </div>
+    <span class="section-badge badge-adaptive">PRODUCCIÓN</span>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Serialización y Despliegue del Modelo</span>
+        <span class="card-icon">📦</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">import joblib</span>
+<span class="imp">import json</span>
+<span class="imp">from datetime import datetime</span>
+
+<span class="cm"># ── GUARDAR MODELO + METADATA ─────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">save_model</span>(<span class="var">pipeline</span>, <span class="var">metrics</span>, <span class="var">config</span>, <span class="var">path</span><span class="op">=</span><span class="str">"./models"</span>):
+    <span class="var">timestamp</span> <span class="op">=</span> <span class="fn">datetime.now</span>().<span class="fn">strftime</span>(<span class="str">"%Y%m%d_%H%M%S"</span>)
+
+    <span class="cm"># Serializar pipeline completo (preprocesador + modelo)</span>
+    <span class="fn">joblib.dump</span>(<span class="var">pipeline</span>, <span class="fn">f</span><span class="str">"{path}/model_{timestamp}.pkl"</span>)
+
+    <span class="cm"># Guardar metadata de entrenamiento</span>
+    <span class="var">metadata</span> <span class="op">=</span> {
+        <span class="str">"timestamp"</span>:         <span class="var">timestamp</span>,
+        <span class="str">"model_type"</span>:        <span class="fn">type</span>(<span class="var">pipeline</span>.<span class="fn">named_steps</span>[<span class="str">'model'</span>]).__name__,
+        <span class="str">"best_params"</span>:       <span class="var">config</span>.<span class="fn">get</span>(<span class="str">"best_params"</span>, {}),
+        <span class="str">"train_metrics"</span>:     <span class="var">metrics</span>.<span class="fn">get</span>(<span class="str">"train"</span>, {}),
+        <span class="str">"test_metrics"</span>:      <span class="var">metrics</span>.<span class="fn">get</span>(<span class="str">"test"</span>, {}),
+        <span class="str">"feature_names"</span>:     <span class="var">config</span>.<span class="fn">get</span>(<span class="str">"feature_names"</span>, []),
+        <span class="str">"random_state"</span>:      <span class="var">RANDOM_STATE</span>,
+        <span class="str">"python_version"</span>:    <span class="var">sys</span>.<span class="var">version</span>,
+        <span class="str">"sklearn_version"</span>:   <span class="var">sklearn</span>.__version__,
+    }
+    <span class="kw">with</span> <span class="fn">open</span>(<span class="fn">f</span><span class="str">"{path}/metadata_{timestamp}.json"</span>, <span class="str">"w"</span>) <span class="kw">as</span> <span class="var">f</span>:
+        <span class="fn">json.dump</span>(<span class="var">metadata</span>, <span class="var">f</span>, <span class="var">indent</span><span class="op">=</span><span class="num">2</span>)
+
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"✓ Modelo guardado: model_{timestamp}.pkl"</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"✓ Metadata:        metadata_{timestamp}.json"</span>)
+    <span class="kw">return</span> <span class="fn">f</span><span class="str">"{path}/model_{timestamp}.pkl"</span>
+
+<span class="cm"># ── CARGAR Y PREDECIR ─────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">load_and_predict</span>(<span class="var">model_path</span>, <span class="var">X_new</span>):
+    <span class="var">pipeline</span> <span class="op">=</span> <span class="fn">joblib.load</span>(<span class="var">model_path</span>)
+    <span class="var">predictions</span> <span class="op">=</span> <span class="var">pipeline</span>.<span class="fn">predict</span>(<span class="var">X_new</span>)
+    <span class="cm"># El pipeline aplica automáticamente el preprocesador</span>
+    <span class="cm"># entrenado → nunca hay que aplicarlo manualmente</span>
+    <span class="kw">return</span> <span class="var">predictions</span></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Monitoreo de Data Drift y Model Decay</span>
+        <span class="card-icon">📡</span>
+      </div>
+      <div class="card-body">
+        <pre><span class="imp">from scipy.stats import ks_2samp, chi2_contingency</span>
+<span class="imp">import warnings</span>
+
+<span class="kw">def</span> <span class="fn">detect_data_drift</span>(<span class="var">X_reference</span>, <span class="var">X_new</span>,
+                        <span class="var">threshold</span><span class="op">=</span><span class="num">0.05</span>):
+    <span class="str">"""
+    Compara distribuciones de features entre datos de entrenamiento
+    y datos nuevos usando test KS (numéricos) o chi² (categóricos).
+    Alerta si p-value < threshold (drift detectado).
+    """</span>
+    <span class="var">drift_report</span> <span class="op">=</span> {}
+    <span class="kw">for</span> <span class="var">col</span> <span class="kw">in</span> <span class="var">X_reference</span>.<span class="fn">columns</span>:
+        <span class="kw">if</span> <span class="var">X_reference</span>[<span class="var">col</span>].<span class="fn">dtype</span> <span class="kw">in</span> [<span class="str">'float64'</span>, <span class="str">'int64'</span>]:
+            <span class="var">stat</span>, <span class="var">pval</span> <span class="op">=</span> <span class="fn">ks_2samp</span>(<span class="var">X_reference</span>[<span class="var">col</span>].<span class="fn">dropna</span>(),
+                                    <span class="var">X_new</span>[<span class="var">col</span>].<span class="fn">dropna</span>())
+            <span class="var">drift_report</span>[<span class="var">col</span>] <span class="op">=</span> {
+                <span class="str">"test"</span>: <span class="str">"KS"</span>, <span class="str">"p_value"</span>: <span class="fn">round</span>(<span class="var">pval</span>, <span class="num">4</span>),
+                <span class="str">"drift"</span>: <span class="var">pval</span> <span class="op"><</span> <span class="var">threshold</span>
+            }
+
+    <span class="var">drifted</span> <span class="op">=</span> [<span class="var">k</span> <span class="kw">for</span> <span class="var">k</span>, <span class="var">v</span> <span class="kw">in</span> <span class="var">drift_report</span>.<span class="fn">items</span>() <span class="kw">if</span> <span class="var">v</span>[<span class="str">'drift'</span>]]
+    <span class="kw">if</span> <span class="var">drifted</span>:
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"⚠ DRIFT DETECTADO en: {drifted}"</span>)
+        <span class="fn">print</span>(<span class="str">"  → Considera re-entrenamiento del modelo"</span>)
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">"✓ Sin drift significativo detectado"</span>)
+    <span class="kw">return</span> <span class="var">drift_report</span>
+
+<span class="cm"># ── ESTRATEGIA DE RE-ENTRENAMIENTO ────────────────────────</span>
+<span class="var">RETRAIN_TRIGGERS</span> <span class="op">=</span> {
+    <span class="str">"performance_drop"</span>: <span class="num">0.10</span>,  <span class="cm"># NSE cae 10% vs baseline histórico</span>
+    <span class="str">"data_drift_features"</span>: <span class="num">3</span>,  <span class="cm"># 3+ features con drift</span>
+    <span class="str">"time_since_train_days"</span>: <span class="num">90</span>,  <span class="cm"># 90 días sin re-entrenar</span>
+    <span class="str">"new_data_pct"</span>: <span class="num">0.20</span>         <span class="cm"># 20% más de datos disponibles</span>
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PHASE 8: PLANTILLA COMPLETA
+═══════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase-8">
+  <div class="section-header">
+    <div>
+      <div class="phase-label">Phase 08 · Master Template</div>
+      <h2 class="section-title">Plantilla Completa<br>Copy-Paste Ready</h2>
+      <p class="section-desc">Esqueleto completo para cualquier proyecto. Copia, adapta los parámetros marcados con ← y ejecuta.</p>
+    </div>
+    <span class="section-badge badge-core">PLANTILLA MAESTRA</span>
+  </div>
+
+  <div class="code-section">
+    <div class="code-label">ml_project_template.py — Pipeline Completo Adaptativo</div>
+    <pre><span class="cm"># ═══════════════════════════════════════════════════════════════════════════════
+# ML PROJECT TEMPLATE — PIPELINE ADAPTATIVO UNIVERSAL
+# Compatible con cualquier tarea de ML supervisado/no supervisado
+# Autor: ML Framework v1.0 | Semilla: 42 | Reproducible
+# ═══════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="cm"># ── 0. IMPORTACIONES ─────────────────────────────────────────────────────────</span>
+<span class="imp">import numpy as np</span>
+<span class="imp">import pandas as pd</span>
+<span class="imp">import matplotlib.pyplot as plt</span>
+<span class="imp">import seaborn as sns</span>
+<span class="imp">import warnings</span>
+<span class="imp">import joblib</span>
+<span class="imp">import json</span>
+<span class="imp">from datetime import datetime</span>
+<span class="imp">from pathlib import Path</span>
+
+<span class="imp">from sklearn.model_selection import (train_test_split, cross_val_score,
+                                      RandomizedSearchCV, TimeSeriesSplit)</span>
+<span class="imp">from sklearn.pipeline import Pipeline</span>
+<span class="imp">from sklearn.compose import ColumnTransformer</span>
+<span class="imp">from sklearn.preprocessing import (StandardScaler, RobustScaler, MinMaxScaler,
+                                     OneHotEncoder, FunctionTransformer)</span>
+<span class="imp">from sklearn.impute import SimpleImputer, KNNImputer</span>
+<span class="imp">from sklearn.dummy import DummyRegressor, DummyClassifier</span>
+<span class="imp">from sklearn.linear_model import Ridge, Lasso, LogisticRegression, LinearRegression</span>
+<span class="imp">from sklearn.ensemble import (RandomForestRegressor, RandomForestClassifier,
+                               GradientBoostingRegressor, GradientBoostingClassifier)</span>
+<span class="imp">from sklearn.inspection import permutation_importance</span>
+<span class="imp">from sklearn.metrics import (mean_squared_error, mean_absolute_error, r2_score,
+                               classification_report, roc_auc_score,
+                               confusion_matrix, average_precision_score)</span>
+
+<span class="var">warnings</span>.<span class="fn">filterwarnings</span>(<span class="str">'ignore'</span>)
+<span class="fn">plt.style.use</span>(<span class="str">'seaborn-v0_8-whitegrid'</span>)
+
+<span class="cm"># ── 1. CONFIGURACIÓN DEL PROYECTO (ADAPTAR) ──────────────────────────────────</span>
+<span class="var">CONFIG</span> <span class="op">=</span> {
+    <span class="cm"># ← ADAPTAR ESTOS VALORES ↓</span>
+    <span class="str">"project_name"</span>:     <span class="str">"mi_proyecto_ml"</span>,
+    <span class="str">"task_type"</span>:        <span class="str">"regression"</span>,     <span class="cm"># ← regression | classification | clustering</span>
+    <span class="str">"target_col"</span>:       <span class="str">"target"</span>,          <span class="cm"># ← nombre de la columna objetivo</span>
+    <span class="str">"temporal_data"</span>:    <span class="cls">False</span>,             <span class="cm"># ← True si es serie de tiempo</span>
+    <span class="str">"test_size"</span>:        <span class="num">0.20</span>,
+    <span class="str">"cv_folds"</span>:         <span class="num">5</span>,
+    <span class="str">"n_iter_search"</span>:    <span class="num">30</span>,                <span class="cm"># ← iteraciones búsqueda aleatoria</span>
+    <span class="str">"primary_metric"</span>:   <span class="str">"neg_root_mean_squared_error"</span>,  <span class="cm"># ← métrica scikit-learn</span>
+    <span class="str">"random_state"</span>:     <span class="num">42</span>,
+    <span class="str">"n_jobs"</span>:           <span class="op">-</span><span class="num">1</span>,
+    <span class="str">"output_dir"</span>:       <span class="str">"./outputs"</span>,
+}
+<span class="cls">Path</span>(<span class="var">CONFIG</span>[<span class="str">"output_dir"</span>]).<span class="fn">mkdir</span>(<span class="var">exist_ok</span><span class="op">=</span><span class="cls">True</span>)
+<span class="var">SEED</span> <span class="op">=</span> <span class="var">CONFIG</span>[<span class="str">"random_state"</span>]
+
+<span class="cm"># ── 2. CARGA DE DATOS (ADAPTAR) ───────────────────────────────────────────────</span>
+<span class="var">df</span> <span class="op">=</span> <span class="fn">pd.read_csv</span>(<span class="str">"data.csv"</span>)  <span class="cm"># ← cambiar a tu fuente de datos</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Dataset cargado: {df.shape[0]:,} filas × {df.shape[1]} columnas"</span>)
+
+<span class="cm"># ── 3. EDA AUTOMÁTICO ────────────────────────────────────────────────────────</span>
+<span class="fn">print</span>(<span class="str">"\n═══ ESTRUCTURA ═══"</span>)
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">dtypes</span>.<span class="fn">value_counts</span>())
+<span class="fn">print</span>(<span class="str">"\n═══ MISSING VALUES ═══"</span>)
+<span class="var">missing</span> <span class="op">=</span> (<span class="var">df</span>.<span class="fn">isnull</span>().<span class="fn">sum</span>() <span class="op">/</span> <span class="fn">len</span>(<span class="var">df</span>) <span class="op">*</span> <span class="num">100</span>)
+<span class="fn">print</span>(<span class="var">missing</span>[<span class="var">missing</span> <span class="op">></span> <span class="num">0</span>].<span class="fn">sort_values</span>(<span class="var">ascending</span><span class="op">=</span><span class="cls">False</span>))
+<span class="fn">print</span>(<span class="str">"\n═══ ESTADÍSTICAS DESCRIPTIVAS ═══"</span>)
+<span class="fn">print</span>(<span class="var">df</span>.<span class="fn">describe</span>().<span class="fn">T</span>.<span class="fn">round</span>(<span class="num">3</span>))
+
+<span class="cm"># Detección automática de desbalance (clasificación)</span>
+<span class="kw">if</span> <span class="var">CONFIG</span>[<span class="str">"task_type"</span>] <span class="op">==</span> <span class="str">"classification"</span>:
+    <span class="var">vc</span> <span class="op">=</span> <span class="var">df</span>[<span class="var">CONFIG</span>[<span class="str">"target_col"</span>]].<span class="fn">value_counts</span>(<span class="var">normalize</span><span class="op">=</span><span class="cls">True</span>)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n═══ DISTRIBUCIÓN DE CLASES ═══\n{vc}"</span>)
+    <span class="kw">if</span> <span class="var">vc</span>.<span class="fn">min</span>() <span class="op"><</span> <span class="num">0.15</span>:
+        <span class="fn">print</span>(<span class="str">"⚠ DESBALANCE DETECTADO → usar AUC-PR y class_weight='balanced'"</span>)
+
+<span class="cm"># ── 4. SEPARACIÓN X / y ──────────────────────────────────────────────────────</span>
+<span class="var">X</span> <span class="op">=</span> <span class="var">df</span>.<span class="fn">drop</span>(<span class="var">columns</span><span class="op">=</span>[<span class="var">CONFIG</span>[<span class="str">"target_col"</span>]])
+<span class="var">y</span> <span class="op">=</span> <span class="var">df</span>[<span class="var">CONFIG</span>[<span class="str">"target_col"</span>]]
+
+<span class="cm"># ── 5. SPLIT (SIEMPRE PRIMERO) ────────────────────────────────────────────────</span>
+<span class="kw">if</span> <span class="op">not</span> <span class="var">CONFIG</span>[<span class="str">"temporal_data"</span>]:
+    <span class="var">stratify_arg</span> <span class="op">=</span> <span class="var">y</span> <span class="kw">if</span> <span class="var">CONFIG</span>[<span class="str">"task_type"</span>] <span class="op">==</span> <span class="str">"classification"</span> <span class="kw">else</span> <span class="cls">None</span>
+    <span class="var">X_train</span>, <span class="var">X_test</span>, <span class="var">y_train</span>, <span class="var">y_test</span> <span class="op">=</span> <span class="fn">train_test_split</span>(
+        <span class="var">X</span>, <span class="var">y</span>,
+        <span class="var">test_size</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"test_size"</span>],
+        <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>,
+        <span class="var">stratify</span><span class="op">=</span><span class="var">stratify_arg</span>
+    )
+<span class="kw">else</span>:
+    <span class="var">n</span> <span class="op">=</span> <span class="fn">len</span>(<span class="var">X</span>)
+    <span class="var">split_idx</span> <span class="op">=</span> <span class="fn">int</span>(<span class="var">n</span> <span class="op">*</span> (<span class="num">1</span> <span class="op">-</span> <span class="var">CONFIG</span>[<span class="str">"test_size"</span>]))
+    <span class="var">X_train</span>, <span class="var">X_test</span> <span class="op">=</span> <span class="var">X</span>.<span class="fn">iloc</span>[:<span class="var">split_idx</span>], <span class="var">X</span>.<span class="fn">iloc</span>[<span class="var">split_idx</span>:]
+    <span class="var">y_train</span>, <span class="var">y_test</span> <span class="op">=</span> <span class="var">y</span>.<span class="fn">iloc</span>[:<span class="var">split_idx</span>], <span class="var">y</span>.<span class="fn">iloc</span>[<span class="var">split_idx</span>:]
+
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"\nTrain: {X_train.shape} | Test: {X_test.shape}"</span>)
+
+<span class="cm"># ── 6. DEFINIR COLUMNAS POR TIPO ──────────────────────────────────────────────</span>
+<span class="var">num_cols</span> <span class="op">=</span> <span class="var">X_train</span>.<span class="fn">select_dtypes</span>(<span class="fn">include</span><span class="op">=</span>[<span class="str">'number'</span>]).<span class="fn">columns</span>.<span class="fn">tolist</span>()
+<span class="var">cat_cols</span> <span class="op">=</span> <span class="var">X_train</span>.<span class="fn">select_dtypes</span>(<span class="fn">include</span><span class="op">=</span>[<span class="str">'object'</span>, <span class="str">'category'</span>]).<span class="fn">columns</span>.<span class="fn">tolist</span>()
+
+<span class="cm"># ── 7. PIPELINES DE PREPROCESAMIENTO ─────────────────────────────────────────</span>
+<span class="var">num_pipe</span> <span class="op">=</span> <span class="cls">Pipeline</span>([
+    (<span class="str">'imputer'</span>, <span class="cls">KNNImputer</span>(<span class="var">n_neighbors</span><span class="op">=</span><span class="num">5</span>)),
+    (<span class="str">'scaler'</span>,  <span class="cls">RobustScaler</span>())            <span class="cm"># ← cambiar según EDA (StandardScaler si normal)</span>
+])
+
+<span class="var">cat_pipe</span> <span class="op">=</span> <span class="cls">Pipeline</span>([
+    (<span class="str">'imputer'</span>, <span class="cls">SimpleImputer</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'most_frequent'</span>)),
+    (<span class="str">'encoder'</span>, <span class="cls">OneHotEncoder</span>(<span class="var">handle_unknown</span><span class="op">=</span><span class="str">'ignore'</span>, <span class="var">sparse_output</span><span class="op">=</span><span class="cls">False</span>))
+])
+
+<span class="var">transformers</span> <span class="op">=</span> []
+<span class="kw">if</span> <span class="var">num_cols</span>: <span class="var">transformers</span>.<span class="fn">append</span>((<span class="str">'num'</span>, <span class="var">num_pipe</span>, <span class="var">num_cols</span>))
+<span class="kw">if</span> <span class="var">cat_cols</span>: <span class="var">transformers</span>.<span class="fn">append</span>((<span class="str">'cat'</span>, <span class="var">cat_pipe</span>, <span class="var">cat_cols</span>))
+
+<span class="var">preprocessor</span> <span class="op">=</span> <span class="cls">ColumnTransformer</span>(<span class="fn">transformers</span><span class="op">=</span><span class="var">transformers</span>)
+
+<span class="cm"># ── 8. PORTAFOLIO DE MODELOS (se selecciona según task_type) ─────────────────</span>
+<span class="kw">if</span> <span class="var">CONFIG</span>[<span class="str">"task_type"</span>] <span class="op">==</span> <span class="str">"regression"</span>:
+    <span class="var">MODELS</span> <span class="op">=</span> {
+        <span class="str">"Baseline_Mean"</span>:  <span class="cls">DummyRegressor</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'mean'</span>),
+        <span class="str">"LinearReg"</span>:      <span class="cls">LinearRegression</span>(),
+        <span class="str">"Ridge"</span>:          <span class="cls">Ridge</span>(<span class="var">alpha</span><span class="op">=</span><span class="num">1.0</span>),
+        <span class="str">"RandomForest"</span>:   <span class="cls">RandomForestRegressor</span>(<span class="var">n_estimators</span><span class="op">=</span><span class="num">200</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>),
+        <span class="str">"GradientBoost"</span>:  <span class="cls">GradientBoostingRegressor</span>(<span class="var">n_estimators</span><span class="op">=</span><span class="num">200</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>),
+    }
+<span class="kw">elif</span> <span class="var">CONFIG</span>[<span class="str">"task_type"</span>] <span class="op">==</span> <span class="str">"classification"</span>:
+    <span class="var">MODELS</span> <span class="op">=</span> {
+        <span class="str">"Baseline_Freq"</span>:  <span class="cls">DummyClassifier</span>(<span class="var">strategy</span><span class="op">=</span><span class="str">'most_frequent'</span>),
+        <span class="str">"LogisticReg"</span>:    <span class="cls">LogisticRegression</span>(<span class="var">max_iter</span><span class="op">=</span><span class="num">500</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>),
+        <span class="str">"RandomForest"</span>:   <span class="cls">RandomForestClassifier</span>(<span class="var">n_estimators</span><span class="op">=</span><span class="num">200</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>,
+                                                   <span class="var">class_weight</span><span class="op">=</span><span class="str">'balanced'</span>),
+        <span class="str">"GradientBoost"</span>:  <span class="cls">GradientBoostingClassifier</span>(<span class="var">n_estimators</span><span class="op">=</span><span class="num">200</span>, <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>),
+    }
+
+<span class="cm"># ── 9. COMPARACIÓN CON CROSS-VALIDATION ──────────────────────────────────────</span>
+<span class="var">cv_strategy</span> <span class="op">=</span> (<span class="cls">TimeSeriesSplit</span>(<span class="var">n_splits</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"cv_folds"</span>])
+               <span class="kw">if</span> <span class="var">CONFIG</span>[<span class="str">"temporal_data"</span>]
+               <span class="kw">else</span> <span class="var">CONFIG</span>[<span class="str">"cv_folds"</span>])
+
+<span class="fn">print</span>(<span class="str">"\n═══ COMPARACIÓN DE MODELOS (CV) ═══"</span>)
+<span class="var">results</span> <span class="op">=</span> {}
+<span class="kw">for</span> <span class="var">name</span>, <span class="var">model</span> <span class="kw">in</span> <span class="var">MODELS</span>.<span class="fn">items</span>():
+    <span class="var">pipe</span> <span class="op">=</span> <span class="cls">Pipeline</span>([(<span class="str">'preproc'</span>, <span class="var">preprocessor</span>), (<span class="str">'model'</span>, <span class="var">model</span>)])
+    <span class="var">scores</span> <span class="op">=</span> <span class="fn">cross_val_score</span>(<span class="var">pipe</span>, <span class="var">X_train</span>, <span class="var">y_train</span>,
+                               <span class="var">cv</span><span class="op">=</span><span class="var">cv_strategy</span>,
+                               <span class="var">scoring</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"primary_metric"</span>],
+                               <span class="var">n_jobs</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"n_jobs"</span>])
+    <span class="var">results</span>[<span class="var">name</span>] <span class="op">=</span> (<span class="fn">abs</span>(<span class="var">scores</span>.<span class="fn">mean</span>()), <span class="var">scores</span>.<span class="fn">std</span>())
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  {name:<20} = {abs(scores.mean()):.5f} ± {scores.std():.5f}"</span>)
+
+<span class="cm"># ── 10. TUNING DEL MEJOR MODELO ──────────────────────────────────────────────</span>
+<span class="var">best_model_name</span> <span class="op">=</span> <span class="fn">min</span>(<span class="var">results</span>, <span class="var">key</span><span class="op">=</span><span class="kw">lambda</span> <span class="var">k</span>: <span class="var">results</span>[<span class="var">k</span>][<span class="num">0</span>])  <span class="cm"># ajustar si es score (max)</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n✓ Mejor modelo base: {best_model_name}"</span>)
+
+<span class="cm"># ← ADAPTAR param_grid según el modelo ganador</span>
+<span class="var">param_grid</span> <span class="op">=</span> {
+    <span class="str">'model__n_estimators'</span>:    [<span class="num">100</span>, <span class="num">300</span>, <span class="num">500</span>],
+    <span class="str">'model__max_depth'</span>:       [<span class="cls">None</span>, <span class="num">5</span>, <span class="num">10</span>, <span class="num">20</span>],
+    <span class="str">'model__min_samples_leaf'</span>: [<span class="num">1</span>, <span class="num">5</span>, <span class="num">10</span>],
+}
+
+<span class="var">best_pipe</span> <span class="op">=</span> <span class="cls">Pipeline</span>([
+    (<span class="str">'preproc'</span>, <span class="var">preprocessor</span>),
+    (<span class="str">'model'</span>, <span class="var">MODELS</span>[<span class="var">best_model_name</span>])
+])
+
+<span class="var">search</span> <span class="op">=</span> <span class="cls">RandomizedSearchCV</span>(
+    <span class="var">best_pipe</span>, <span class="var">param_grid</span>,
+    <span class="var">n_iter</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"n_iter_search"</span>],
+    <span class="var">cv</span><span class="op">=</span><span class="var">cv_strategy</span>,
+    <span class="var">scoring</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"primary_metric"</span>],
+    <span class="var">random_state</span><span class="op">=</span><span class="var">SEED</span>,
+    <span class="var">n_jobs</span><span class="op">=</span><span class="var">CONFIG</span>[<span class="str">"n_jobs"</span>],
+    <span class="var">verbose</span><span class="op">=</span><span class="num">1</span>
+)
+<span class="var">search</span>.<span class="fn">fit</span>(<span class="var">X_train</span>, <span class="var">y_train</span>)
+<span class="var">final_model</span> <span class="op">=</span> <span class="var">search</span>.<span class="var">best_estimator_</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Best params: {search.best_params_}"</span>)
+
+<span class="cm"># ── 11. EVALUACIÓN FINAL EN TEST ──────────────────────────────────────────────</span>
+<span class="fn">print</span>(<span class="str">"\n═══ EVALUACIÓN FINAL EN TEST SET ═══"</span>)
+<span class="var">y_pred_train</span> <span class="op">=</span> <span class="var">final_model</span>.<span class="fn">predict</span>(<span class="var">X_train</span>)
+<span class="var">y_pred_test</span>  <span class="op">=</span> <span class="var">final_model</span>.<span class="fn">predict</span>(<span class="var">X_test</span>)
+
+<span class="kw">if</span> <span class="var">CONFIG</span>[<span class="str">"task_type"</span>] <span class="op">==</span> <span class="str">"regression"</span>:
+    <span class="kw">for</span> <span class="var">label</span>, <span class="var">yt</span>, <span class="var">yp</span> <span class="kw">in</span> [(<span class="str">"TRAIN"</span>, <span class="var">y_train</span>, <span class="var">y_pred_train</span>),
+                               (<span class="str">"TEST"</span>,  <span class="var">y_test</span>,  <span class="var">y_pred_test</span>)]:
+        <span class="var">rmse</span> <span class="op">=</span> <span class="fn">np.sqrt</span>(<span class="fn">mean_squared_error</span>(<span class="var">yt</span>, <span class="var">yp</span>))
+        <span class="var">r2</span>   <span class="op">=</span> <span class="fn">r2_score</span>(<span class="var">yt</span>, <span class="var">yp</span>)
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  {label}: RMSE={rmse:.4f} | R²={r2:.4f}"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="fn">classification_report</span>(<span class="var">y_test</span>, <span class="var">y_pred_test</span>))
+
+<span class="cm"># ── 12. GUARDAR MODELO Y METADATA ────────────────────────────────────────────</span>
+<span class="var">ts</span> <span class="op">=</span> <span class="fn">datetime.now</span>().<span class="fn">strftime</span>(<span class="str">"%Y%m%d_%H%M%S"</span>)
+<span class="fn">joblib.dump</span>(<span class="var">final_model</span>, <span class="fn">f</span><span class="str">"{CONFIG['output_dir']}/model_{ts}.pkl"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"\n✓ Pipeline completo guardado: model_{ts}.pkl"</span>)
+<span class="fn">print</span>(<span class="str">"══════════════════════════════════════════════════"</span>)
+<span class="fn">print</span>(<span class="str">"  PIPELINE COMPLETADO EXITOSAMENTE"</span>)
+<span class="fn">print</span>(<span class="str">"══════════════════════════════════════════════════"</span>)</pre>
+  </div>
+
+  <div class="content-grid" style="padding-top:0">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Señales de Alerta — Qué Verificar Siempre</span>
+        <span class="card-icon">🚨</span>
+      </div>
+      <div class="card-body">
+        <ul class="checklist">
+          <li><strong>Score train >> score test</strong> → overfitting. Regularizar, más datos, menos features.</li>
+          <li><strong>Score train ≈ score test ≈ bajo</strong> → underfitting. Modelo más complejo, más features, eliminar regularización.</li>
+          <li><strong>Score test > score baseline por margen insignificante</strong> → modelo no aporta valor real.</li>
+          <li><strong>Alta varianza entre folds (std > 0.05)</strong> → modelo inestable. Revisar data quality o aumentar CV folds.</li>
+          <li><strong>Accuracy ≈ proporción clase mayoritaria</strong> → el modelo no aprendió nada. Revisar desbalance.</li>
+          <li><strong>PBIAS > 25%</strong> → sesgo sistemático. Revisar feature engineering y transformaciones.</li>
+          <li><strong>Residuos con patrón sistemático</strong> → relación no capturada. Agregar features o modelo más complejo.</li>
+          <li><strong>Feature importancia dispersa y uniforme</strong> → posible ruido o multicolinealidad. Revisitar EDA.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Checklist Final de Entrega</span>
+        <span class="card-icon">✅</span>
+      </div>
+      <div class="card-body">
+        <ul class="checklist">
+          <li>EDA completado y documentado con hallazgos clave</li>
+          <li>Split realizado <strong>antes</strong> de cualquier transformación</li>
+          <li>Preprocesamiento encapsulado en Pipeline (sin leakage)</li>
+          <li>Baseline simple evaluado y reportado</li>
+          <li>≥ 2 modelos comparados con cross-validation</li>
+          <li>Métricas reportadas en train Y test (no solo training)</li>
+          <li>Análisis de residuos o matriz de confusión incluido</li>
+          <li>Feature importance / SHAP calculado</li>
+          <li>Modelo serializado con metadata de entrenamiento</li>
+          <li>Semilla fija documentada (reproducibilidad)</li>
+          <li>Limitaciones y supuestos explicitados</li>
+          <li>Código comentado y parametrizable</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPhase(idx) {
+    // Ocultar todos los paneles de contenido
+    document.querySelectorAll('.phase-content').forEach(function(el) {
+      el.classList.remove('active');
+    });
+    // Desactivar todos los botones del nav
+    document.querySelectorAll('.phase-btn').forEach(function(el) {
+      el.classList.remove('active');
+    });
+    // Mostrar el panel objetivo
+    var target = document.getElementById('phase-' + idx);
+    if (target) target.classList.add('active');
+    // Activar el botón del nav que tiene data-phase coincidente
+    var btn = document.querySelector('.phase-btn[data-phase="' + idx + '"]');
+    if (btn) btn.classList.add('active');
+    // Scroll al nav
+    var nav = document.querySelector('.phase-nav');
+    if (nav) window.scrollTo({ top: nav.offsetTop - 10, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>

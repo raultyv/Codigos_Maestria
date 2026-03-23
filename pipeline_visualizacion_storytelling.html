@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Viz & Storytelling v1.0 | Complementario Data Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080a0c;
+    --surface: #0d1114;
+    --surface2: #131920;
+    --surface3: #192028;
+    --border: #1e2d38;
+    --border-hi: #28404f;
+    --text: #ccdce6;
+    --text-dim: #5c7a8a;
+    --text-muted: #324a57;
+    --v1: #e8c547;   /* Explorar */
+    --v2: #47b8e8;   /* Analizar */
+    --v3: #e8476b;   /* Explicar */
+    --accent: #47e8c5;
+    --warn: #e8a347;
+    --danger: #e8475a;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Playfair Display', serif;
+    --sans: 'Inter', sans-serif;
+
+    /* Paleta auditada — Generalitat + extensiones técnicas */
+    --pal-seq1: #083d6e;
+    --pal-seq2: #1565a8;
+    --pal-seq3: #3b8fc9;
+    --pal-seq4: #80c0e0;
+    --pal-seq5: #c5e5f2;
+    --pal-div-neg: #d73027;
+    --pal-div-ctr: #f7f7f7;
+    --pal-div-pos: #1a9850;
+    --pal-cat1: #4e79a7;
+    --pal-cat2: #f28e2b;
+    --pal-cat3: #e15759;
+    --pal-cat4: #76b7b2;
+    --pal-cat5: #59a14f;
+    --pal-cat6: #edc948;
+    --pal-cat7: #b07aa1;
+    --pal-cat8: #ff9da7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.6;
+  }
+
+  /* HEADER */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: rgba(8,10,12,0.95);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+  }
+
+  .hdr-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hdr-pipeline {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+  }
+
+  .hdr-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .hdr-connector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .hdr-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* HERO */
+  .hero {
+    padding: 72px 48px 56px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .hero-eye {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--v3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-eye::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--v3);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: #ddeef5;
+    margin-bottom: 24px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--v3);
+  }
+
+  h1 .accent-word {
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.85;
+    max-width: 580px;
+    margin-bottom: 28px;
+  }
+
+  .hero-chain {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chain-node {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+  }
+
+  .chain-arrow {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .chain-node.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(71,232,197,0.05);
+  }
+
+  /* TRIPLE PURPOSE */
+  .triple-purpose {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .tp-item {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tp-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--tp-color);
+    transform: scaleY(0);
+    transition: transform 0.25s;
+  }
+
+  .tp-item:hover::before { transform: scaleY(1); }
+  .tp-item:hover { background: var(--surface2); border-color: var(--border-hi); }
+
+  .tp-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--tp-color);
+    opacity: 0.3;
+    line-height: 1;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .tp-info {}
+  .tp-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--tp-color);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .tp-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+  /* NAV */
+  .vnav {
+    position: sticky;
+    top: 52px;
+    z-index: 150;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 48px;
+    overflow-x: auto;
+    gap: 0;
+  }
+
+  .vnav::-webkit-scrollbar { height: 0; }
+
+  .vtab {
+    padding: 14px 22px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+
+  .vtab:hover { color: var(--text-dim); }
+  .vtab.active { color: var(--text); border-bottom-color: var(--tc); }
+
+  .vtab-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--tc);
+    flex-shrink: 0;
+  }
+
+  /* MAIN */
+  main { padding: 0 48px; }
+
+  /* SECTIONS */
+  .vsection {
+    display: none;
+    padding: 48px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.3s ease;
+  }
+
+  .vsection.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION HEADER */
+  .sec-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    align-items: start;
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sec-num {
+    font-family: var(--serif);
+    font-size: 72px;
+    font-weight: 700;
+    color: var(--sc);
+    opacity: 0.12;
+    line-height: 1;
+  }
+
+  .sec-info {}
+
+  .sec-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--sc);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .sec-title {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 400;
+    color: #ddeef5;
+    margin-bottom: 12px;
+  }
+
+  .sec-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    max-width: 660px;
+    line-height: 1.75;
+  }
+
+  /* SUBSECTION TITLE */
+  .sub-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sub-title::before {
+    content: '';
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--sc, var(--accent));
+    flex-shrink: 0;
+  }
+
+  /* GRIDS */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border-hi); }
+
+  .card-hd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-icon {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface3);
+    border: 1px solid var(--border-hi);
+    color: var(--sc, var(--accent));
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .card-body {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* STEP LIST */
+  .steps { display: flex; flex-direction: column; gap: 3px; margin-top: 12px; }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border-left: 2px solid var(--border-hi);
+    transition: all 0.2s;
+  }
+
+  .step:hover {
+    background: var(--surface3);
+    border-left-color: var(--sc, var(--accent));
+  }
+
+  .step-n {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--sc, var(--accent));
+    min-width: 22px;
+    padding-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .step-t {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .step-t strong { color: var(--text); font-weight: 500; }
+
+  /* CHART TYPE MATRIX */
+  .chart-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+
+  .cm-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cm-cell:hover { border-color: var(--border-hi); background: var(--surface2); }
+
+  .cm-category {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--cm-color, var(--text-muted));
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cm-types {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cm-type {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cm-type::before {
+    content: '';
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--cm-color, var(--text-muted));
+    flex-shrink: 0;
+  }
+
+  .cm-use {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* DECISION MATRIX — cuándo usar qué gráfico */
+  .decision-matrix {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .dm-head {
+    padding: 14px 20px;
+    background: var(--surface3);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .dm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .dm-row:last-child { border-bottom: none; }
+  .dm-row:hover { background: var(--surface2); }
+
+  .dm-cell {
+    padding: 11px 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-right: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .dm-cell:last-child { border-right: none; }
+  .dm-cell:first-child { font-family: var(--mono); color: var(--text); font-size: 11px; }
+
+  .dm-head-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    background: var(--surface3);
+    border-bottom: 1px solid var(--border-hi);
+  }
+
+  .dm-th {
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--border);
+  }
+
+  .dm-th:last-child { border-right: none; }
+
+  /* PALETA VISUAL */
+  .palette-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .pal-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pal-row {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .pal-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    min-width: 120px;
+  }
+
+  .pal-swatch {
+    width: 36px;
+    height: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+  }
+
+  .pal-hex {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-left: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* STORYTELLING */
+  .story-arc {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .arc-act {
+    padding: 24px 20px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arc-act:last-child { border-right: none; }
+
+  .arc-num {
+    font-family: var(--mono);
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--ac-color);
+    opacity: 0.12;
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    line-height: 1;
+  }
+
+  .arc-act-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ac-color);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .arc-act-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .arc-act-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .arc-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    color: var(--text-muted);
+    font-size: 18px;
+  }
+
+  /* COGNITIVE LOAD SECTION */
+  .cog-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .cog-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px;
+    transition: border-color 0.2s;
+  }
+
+  .cog-item:hover { border-color: var(--border-hi); }
+
+  .cog-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ci-color, var(--accent));
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cog-body {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  /* ALERT */
+  .alert {
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border-left: 3px solid;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .alert-warn { border-color: var(--warn); background: rgba(232,163,71,0.04); }
+  .alert-danger { border-color: var(--danger); background: rgba(232,71,90,0.04); }
+  .alert-info { border-color: var(--v2); background: rgba(71,184,232,0.04); }
+  .alert-ok { border-color: var(--accent); background: rgba(71,232,197,0.04); }
+
+  .alert-icon { font-family: var(--mono); font-size: 12px; flex-shrink: 0; padding-top: 1px; }
+  .alert-warn .alert-icon { color: var(--warn); }
+  .alert-danger .alert-icon { color: var(--danger); }
+  .alert-info .alert-icon { color: var(--v2); }
+  .alert-ok .alert-icon { color: var(--accent); }
+
+  .alert-body { font-size: 13px; color: var(--text-dim); line-height: 1.65; }
+  .alert-body strong { color: var(--text); font-weight: 500; }
+
+  /* CODE */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .code-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 16px;
+    background: var(--surface3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+  .code-note { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+
+  .code-bd { padding: 18px; overflow-x: auto; }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre;
+  }
+
+  .c-c { color: #2e4f5f; }
+  .c-k { color: var(--v2); }
+  .c-f { color: var(--accent); }
+  .c-s { color: var(--warn); }
+  .c-n { color: #9b7bdb; }
+  .c-i { color: #e87247; }
+  .c-v { color: var(--text); }
+
+  /* ANTI PATTERNS */
+  .anti-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .anti-item {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+  }
+
+  .anti-x { font-family: var(--mono); font-size: 13px; color: var(--danger); flex-shrink: 0; }
+  .anti-body { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+  .anti-body strong { color: var(--text); font-weight: 500; }
+
+  /* OK PATTERNS */
+  .ok-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .ok-item {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+  }
+
+  .ok-check { font-family: var(--mono); font-size: 13px; color: var(--accent); flex-shrink: 0; }
+  .ok-body { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+  .ok-body strong { color: var(--text); font-weight: 500; }
+
+  /* INTEGRATION BRIDGE */
+  .bridge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .bridge-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bridge-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+  }
+
+  .bridge-node {
+    background: var(--surface2);
+    border: 1px solid var(--border-hi);
+    padding: 10px 14px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .bn-phase {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--bn-color, var(--text-muted));
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .bn-label {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .bridge-arrow {
+    padding: 0 6px;
+    color: var(--text-muted);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* TABLE */
+  table.dt {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+
+  table.dt th {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border-hi);
+    text-align: left;
+    background: var(--surface);
+  }
+
+  table.dt td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+
+  table.dt tr:hover td { background: var(--surface); }
+  table.dt td:first-child { font-family: var(--mono); color: var(--text); font-size: 11px; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  .badge-ok { color: var(--accent); border-color: rgba(71,232,197,0.4); }
+  .badge-no { color: var(--danger); border-color: rgba(232,71,90,0.4); }
+  .badge-warn { color: var(--warn); border-color: rgba(232,163,71,0.4); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(71,232,197,0.07);
+    padding: 1px 5px;
+    border: 1px solid rgba(71,232,197,0.2);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 28px 48px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ft-left {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .ft-left span { color: var(--accent); }
+
+  .ft-right {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1000px) {
+    .hero { grid-template-columns: 1fr; }
+    .g4 { grid-template-columns: 1fr 1fr; }
+    .chart-matrix { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 720px) {
+    header { padding: 0 20px; }
+    .hero { padding: 36px 20px; }
+    main { padding: 0 20px; }
+    .vnav { padding: 0 20px; }
+    .g2, .g3 { grid-template-columns: 1fr; }
+    .story-arc { grid-template-columns: 1fr; }
+    .arc-arrow { display: none; }
+    .anti-grid, .ok-grid, .cog-grid { grid-template-columns: 1fr; }
+    .dm-row, .dm-head-row { grid-template-columns: 1fr 1fr; }
+    footer { flex-direction: column; gap: 12px; padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hdr-left">
+    <span class="hdr-pipeline">Pipeline Complementario v1.0</span>
+    <span class="hdr-title">Visualización de Datos & Storytelling</span>
+  </div>
+  <div class="hdr-connector">
+    <span class="hdr-dot"></span>
+    Conectado a Pipeline Data Discovery v3.0
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="hero-eye">Pipeline Complementario — Fase de Comunicación</div>
+    <h1>De los Datos<br>a la <em>Historia</em><br><span class="accent-word">que Decide</span></h1>
+    <p class="hero-desc">
+      El análisis más riguroso fracasa si no puede ser comprendido por quien toma decisiones. 
+      Este pipeline complementario cubre la brecha entre los resultados del EDA y su comunicación 
+      efectiva: selección de gráficos justificada, carga cognitiva mínima, 
+      storytelling estructurado y principios de diseño auditables.
+      Basado en la Guía de Visualización de Datos (Generalitat de Cataluña, 2019) 
+      y en la metodología de Storytelling de Cole Nussbaumer Knaflic.
+    </p>
+    <div class="hero-chain">
+      <div class="chain-node">EDA Completo</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">Calidad ISO 25012</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">Feature Engineering</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node active">⬛ Viz & Storytelling</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node">Deploy</div>
+    </div>
+  </div>
+  <div class="triple-purpose">
+    <div class="tp-item" style="--tp-color:#e8c547">
+      <div class="tp-num">1</div>
+      <div class="tp-info">
+        <div class="tp-label">Explorar</div>
+        <div class="tp-desc">Visualizaciones interactivas para que el analista encuentre patrones. El usuario interroga los datos.</div>
+      </div>
+    </div>
+    <div class="tp-item" style="--tp-color:#47b8e8">
+      <div class="tp-num">2</div>
+      <div class="tp-info">
+        <div class="tp-label">Analizar</div>
+        <div class="tp-desc">Dashboards y aplicaciones de analítica visual. Cuadros de mando para decisión continua.</div>
+      </div>
+    </div>
+    <div class="tp-item" style="--tp-color:#e8476b">
+      <div class="tp-num">3</div>
+      <div class="tp-info">
+        <div class="tp-label">Explicar</div>
+        <div class="tp-desc">Narrativa aclaratoria. Infografías, presentaciones y vídeos. El analista conduce la historia.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NAV -->
+<nav class="vnav">
+  <button class="vtab active" style="--tc:#e8c547" onclick="showV('v0',this)"><span class="vtab-dot"></span>Integración</button>
+  <button class="vtab" style="--tc:#47b8e8" onclick="showV('v1',this)"><span class="vtab-dot"></span>Fase 1 · Estrategia</button>
+  <button class="vtab" style="--tc:#9b7bdb" onclick="showV('v2',this)"><span class="vtab-dot"></span>Fase 2 · Datos→Viz</button>
+  <button class="vtab" style="--tc:#47e8c5" onclick="showV('v3',this)"><span class="vtab-dot"></span>Fase 3 · Diseño</button>
+  <button class="vtab" style="--tc:#e8476b" onclick="showV('v4',this)"><span class="vtab-dot"></span>Catálogo Gráficos</button>
+  <button class="vtab" style="--tc:#e8a347" onclick="showV('v5',this)"><span class="vtab-dot"></span>Principios Diseño</button>
+  <button class="vtab" style="--tc:#e8c547" onclick="showV('v6',this)"><span class="vtab-dot"></span>Storytelling</button>
+  <button class="vtab" style="--tc:#e8475a" onclick="showV('v7',this)"><span class="vtab-dot"></span>Anti-Patrones</button>
+  <button class="vtab" style="--tc:#47b8e8" onclick="showV('v8',this)"><span class="vtab-dot"></span>Código</button>
+</nav>
+
+<main>
+
+<!-- ══ INTEGRACIÓN ══ -->
+<section id="v0" class="vsection active" style="--sc:#e8c547">
+
+  <div class="sec-header">
+    <div class="sec-num">0</div>
+    <div class="sec-info">
+      <div class="sec-label">Punto de Entrada</div>
+      <div class="sec-title">Integración con el Pipeline Principal</div>
+      <div class="sec-desc">
+        Este pipeline se activa cuando el Pipeline de Data Discovery v3.0 ha completado 
+        al menos la Fase 1 (EDA) y tiene hallazgos que comunicar. 
+        No es decorativo: es la capa de comunicación auditada del trabajo analítico.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Puente entre Pipelines — Cuándo activar este pipeline</div>
+
+  <div class="bridge">
+    <div class="bridge-title">⬛ Flujo de Activación — Pipeline Analítico → Pipeline Viz</div>
+    <div class="bridge-flow">
+      <div class="bridge-node" style="--bn-color:#00c8a0">
+        <div class="bn-phase">Pipeline DD v3.0</div>
+        <div class="bn-label">Fase 0<br>Definición</div>
+      </div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node" style="--bn-color:#0090d0">
+        <div class="bn-phase">Pipeline DD v3.0</div>
+        <div class="bn-label">Fase 1<br>EDA</div>
+      </div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node" style="--bn-color:#9b6bff">
+        <div class="bn-phase">Pipeline DD v3.0</div>
+        <div class="bn-label">Fase 2-4<br>Limpieza</div>
+      </div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node" style="--bn-color:#00d4ff">
+        <div class="bn-phase">Pipeline DD v3.0</div>
+        <div class="bn-label">Fase 5<br>Features</div>
+      </div>
+      <div class="bridge-arrow" style="font-size:18px; color:var(--v3)">⇒</div>
+      <div class="bridge-node" style="--bn-color:#e8476b; background:rgba(232,71,107,0.08); border-color:#e8476b">
+        <div class="bn-phase" style="color:#e8476b">ESTE PIPELINE</div>
+        <div class="bn-label" style="color:#ddeef5">Viz &<br>Storytelling</div>
+      </div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node" style="--bn-color:#ff4560">
+        <div class="bn-phase">Pipeline DD v3.0</div>
+        <div class="bn-label">Fase 6<br>Deploy</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Tres preguntas de activación — Responder antes de abrir Matplotlib</div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:var(--v1)">Q1</div>
+        <div class="card-title">¿Quién es la audiencia?</div>
+      </div>
+      <div class="card-body">
+        Identificar al decisor final y su perfil técnico. Una visualización para el ITRB no es la misma que para el director de operaciones.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Técnico experto:</strong> densidad alta, métricas, intervalos de confianza, escalas log.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Gerencia:</strong> tendencias claras, comparaciones categóricas, 1-3 KPIs centrales.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Público general / reguladores:</strong> lenguaje accesible, infografía, texto explicativo abundante.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:var(--v2)">Q2</div>
+        <div class="card-title">¿Qué acción se espera?</div>
+      </div>
+      <div class="card-body">
+        Definir el verbo de la visualización. La gráfica debe impulsar UNA acción específica.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Explorar:</strong> "Que el equipo interrogue los datos" → dashboard interactivo.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Decidir:</strong> "Que el director apruebe la inversión" → presentación aclaratoria.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Monitorear:</strong> "Seguimiento continuo de KPIs" → cuadro de mando.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Alertar:</strong> "Detección temprana de anomalía" → visualización operacional en tiempo real.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:var(--v3)">Q3</div>
+        <div class="card-title">¿Cuál es la evidencia central?</div>
+      </div>
+      <div class="card-body">
+        Identificar el hallazgo más importante del pipeline analítico que debe anclar toda la narrativa.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t">Sintetizar en la <strong>"Gran Idea"</strong>: una sola oración que incluya el hallazgo + la implicación para el negocio.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Máximo <strong>3 mensajes secundarios</strong> que soporten la Gran Idea.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Todo gráfico que no soporte esos 4 mensajes es candidato a eliminarse.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <span class="alert-icon">ℹ</span>
+    <div class="alert-body">
+      <strong>Regla de integración:</strong> Cada hallazgo crítico registrado en el 
+      <code>transformation_log</code> del Pipeline v3.0 (outliers de seguridad, patrones MNAR, 
+      señales GISTM) es candidato obligatorio a aparecer en la visualización. 
+      Un hallazgo de seguridad sin comunicación visual efectiva no está completo.
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ FASE 1 ESTRATEGIA ══ -->
+<section id="v1" class="vsection" style="--sc:#47b8e8">
+
+  <div class="sec-header">
+    <div class="sec-num">1</div>
+    <div class="sec-info">
+      <div class="sec-label">Fase 1 — Metodología Viz</div>
+      <div class="sec-title">Estrategia: Investigar, Objetivos e Indicadores</div>
+      <div class="sec-desc">
+        No se abre ninguna herramienta de visualización hasta que esta fase esté completa. 
+        Un gráfico que responde a la pregunta equivocada es peor que ningún gráfico: 
+        da una falsa sensación de análisis.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">3 Subfases de Estrategia — En orden estricto</div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#47b8e8">1.1</div>
+        <div class="card-title">Investigación y Contexto</div>
+      </div>
+      <div class="card-body">
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t">Revisar los hallazgos del EDA: ¿Qué sorprendió? ¿Qué confirma las hipótesis?</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Identificar el nivel Gartner del análisis: descriptivo, diagnóstico, predictivo o prescriptivo.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Consultar al equipo técnico: ¿Hay restricciones regulatorias sobre qué puede mostrarse?</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Revisar el <code>reporte_calidad_ISO25012.json</code> — las limitaciones de calidad deben comunicarse explícitamente.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#47b8e8">1.2</div>
+        <div class="card-title">Definición de Objetivos</div>
+      </div>
+      <div class="card-body">
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Análisis exploratorio vs. aclaratorio:</strong> explorar = el analista busca patrones; aclarar = el analista comunica algo específico.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Formular la <strong>Gran Idea</strong> en una oración: sujeto + acción + implicación. "El nivel piezométrico del Sector A muestra tendencia creciente sostenida desde octubre, lo que requiere inspección inmediata."</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Definir el <strong>formato de entrega</strong>: infografía, cuadro de mando, presentación, narrativa por desplazamiento o vídeo.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#47b8e8">1.3</div>
+        <div class="card-title">Selección de Indicadores</div>
+      </div>
+      <div class="card-body">
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t">Máximo 5-7 indicadores por visualización. La memoria de trabajo del humano maneja 5-9 elementos simultáneos.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Cada indicador debe responder directamente a la Gran Idea o a uno de los 3 mensajes secundarios.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Documentar la fuente de cada indicador: dataset version + columna + transformación aplicada.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Para informes auditables:</strong> indicar el porcentaje de completitud ISO 25012 debajo de cada métrica clave.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Formatos de Entrega — Cuándo usar cada uno</div>
+
+  <table class="dt">
+    <tr>
+      <th>Formato</th>
+      <th>Objetivo principal</th>
+      <th>Audiencia</th>
+      <th>Nivel Gartner</th>
+      <th>Herramienta recomendada</th>
+    </tr>
+    <tr>
+      <td>Infografía</td>
+      <td>Explicar un hallazgo puntual a público no técnico</td>
+      <td>General / reguladores</td>
+      <td>Descriptivo</td>
+      <td>Canva, Ilustrador, Datawrapper</td>
+    </tr>
+    <tr>
+      <td>Cuadro de mando</td>
+      <td>Monitoreo continuo de KPIs operativos</td>
+      <td>Operaciones / gerencia</td>
+      <td>Descriptivo + Diagnóstico</td>
+      <td>Power BI, Tableau, Grafana</td>
+    </tr>
+    <tr>
+      <td>Aplicación analítica</td>
+      <td>Exploración interactiva de datos complejos</td>
+      <td>Analistas / ingenieros</td>
+      <td>Diagnóstico + Predictivo</td>
+      <td>Plotly Dash, Streamlit, D3.js</td>
+    </tr>
+    <tr>
+      <td>Presentación</td>
+      <td>Comunicar hallazgos y recomendaciones accionables</td>
+      <td>Directivos / ITRB</td>
+      <td>Todos los niveles</td>
+      <td>PowerPoint + Matplotlib/Plotly exportado</td>
+    </tr>
+    <tr>
+      <td>Narrativa scrollytelling</td>
+      <td>Contar una historia larga con datos complejos</td>
+      <td>Mixta, web</td>
+      <td>Diagnóstico + Explicativo</td>
+      <td>Flourish, Observable, D3.js</td>
+    </tr>
+  </table>
+
+</section>
+
+<!-- ══ FASE 2 DATOS→VIZ ══ -->
+<section id="v2" class="vsection" style="--sc:#9b7bdb">
+
+  <div class="sec-header">
+    <div class="sec-num">2</div>
+    <div class="sec-info">
+      <div class="sec-label">Fase 2 — Preparación</div>
+      <div class="sec-title">De los Datos Procesados a la Estructura Visual</div>
+      <div class="sec-desc">
+        Los datos del pipeline analítico no llegan listos para visualizar. 
+        Requieren formateo específico para cada tipo de gráfico, 
+        decisiones de agregación y verificación de que las transformaciones 
+        no distorsionan la interpretación.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Obtención y Agregación desde el Pipeline</div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#9b7bdb">AGG</div>
+        <div class="card-title">Reglas de Agregación</div>
+      </div>
+      <div class="card-body">
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Nunca promediar proporciones directamente.</strong> Ponderar por el denominador correspondiente.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Para series temporales: especificar si la agregación es suma, media, máximo o percentil. Documentar en la leyenda.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Si se aplicó transformación log en el pipeline: revertir con <code>np.expm1()</code> antes de visualizar para que la escala sea interpretable.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Si hay imputaciones (MICE/KNN): distinguir visualmente los valores imputados de los observados (línea punteada, punto hueco, color diferente).</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#9b7bdb">FMT</div>
+        <div class="card-title">Formateo y Limpieza Visual</div>
+      </div>
+      <div class="card-body">
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Unidades explícitas en títulos de eje.</strong> "Caudal" no es suficiente; "Caudal de filtración (l/s)" sí lo es.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Ordenar categorías por frecuencia o magnitud, no alfabéticamente, salvo que el orden alfabético tenga significado.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Fechas en formato ISO 8601 (YYYY-MM-DD) para series temporales en informes técnicos internacionales.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Verificar que los outliers conservados con <code>flag_outlier</code> sean visualmente distinguibles en la gráfica.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠</span>
+    <div class="alert-body">
+      <strong>Trazabilidad obligatoria:</strong> Cada visualización entregada en un informe auditable debe 
+      incluir en su metadato (o pie de gráfico): dataset version utilizado, fecha de corte de datos, 
+      transformaciones aplicadas y score de completitud ISO 25012 de las variables mostradas.
+    </div>
+  </div>
+
+  <div class="sub-title">Boceto Previo — Regla de No-Software</div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#9b7bdb">SK</div>
+        <div class="card-title">Esbozar en Papel Primero</div>
+      </div>
+      <div class="card-body">
+        Antes de escribir una sola línea de código o abrir Tableau: dibujar la visualización a mano. Esto evita la rigidez tecnológica y obliga a pensar en la estructura del mensaje, no en la herramienta.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t">Dibujar los ejes, el tipo de gráfico y dónde irá el texto anotado.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Marcar qué elemento visual llevará el color de mayor énfasis.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Escribir el título como si fuera el titular de un artículo: afirmativo, no descriptivo.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#9b7bdb">PT</div>
+        <div class="card-title">Prototipado con Datos Reales</div>
+      </div>
+      <div class="card-body">
+        El prototipo usa el dataset <code>df_v03_features</code> (no el raw). Iterar hasta que el mensaje sea legible en 5 segundos.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t">Test de los 5 segundos: mostrar la gráfica 5 segundos a alguien del equipo. ¿Puede describir el mensaje principal?</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Si no puede, el problema es de diseño, no de comprensión de la audiencia.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t">Revisar calidad en todos los dispositivos donde se usará (pantalla grande, PDF impreso, móvil).</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ FASE 3 DISEÑO ══ -->
+<section id="v3" class="vsection" style="--sc:#47e8c5">
+
+  <div class="sec-header">
+    <div class="sec-num">3</div>
+    <div class="sec-info">
+      <div class="sec-label">Fase 3 — Producción</div>
+      <div class="sec-title">Diseño: Esbozar, Prototipar, Finalizar</div>
+      <div class="sec-desc">
+        Los principios de diseño no son estéticos: son cognitivos. 
+        Una visualización bien diseñada reduce la carga de trabajo mental del decisor 
+        y aumenta la probabilidad de que el mensaje sea comprendido y actuado correctamente.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">5 Principios de Diseño — Guía Generalitat de Cataluña + Tufte</div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#47e8c5">P1</div>
+        <div class="card-title">Pensamiento Visual</div>
+      </div>
+      <div class="card-body">
+        El 70% de los receptores sensoriales están en los ojos. Aprovechar el procesamiento preatentivo de la memoria icónica: color, tamaño, posición son procesados antes de que seamos conscientes.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Longitud:</strong> el atributo que el cerebro procesa más fácilmente. Por eso los gráficos de barras son universales.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Posición:</strong> más precisa que área o ángulo para comparaciones cuantitativas.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Memoria de trabajo:</strong> máximo 5-9 elementos simultáneos. Más de 9 colores = la leyenda se vuelve ilegible.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#47e8c5">P2</div>
+        <div class="card-title">Color — Reglas Técnicas</div>
+      </div>
+      <div class="card-body">
+        El color es el atributo preatentivo más poderoso y el más mal utilizado.
+        <div class="steps">
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Cuantitativo:</strong> escala secuencial de un solo color (saturación variable). Para valores con punto neutro: escala divergente.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Categórico:</strong> máx. 8-10 colores distinguibles (ColorBrewer / Tableau). Más categorías → agrupar o filtrar.</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Daltonismo:</strong> evitar rojo+verde juntos. 5-10% de la población masculina. Usar paletas accesibles (Viridis, Cividis, OKabe-Ito).</span></div>
+          <div class="step"><span class="step-n">→</span><span class="step-t"><strong>Énfasis:</strong> usar color para resaltar UN elemento. Si todo tiene color, nada tiene énfasis.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-icon" style="color:#47e8c5">P3</div>
+        <div class="card-title">Forma y Atributos Visuales</div>
+      </div>
+      <div class="card-body">
+        Jerarquía de precisión perceptual según Cleveland & McGill (1984):
+        <div class="steps">
+          <div class="step"><span class="step-n">1°</span><span class="step-t"><strong>Posición en eje común</strong> — máxima precisión (gráfico de barras, puntos en scatter)</span></div>
+          <div class="step"><span class="step-n">2°</span><span class="step-t"><strong>Longitud</strong> — alta precisión (barras horizontales)</span></div>
+          <div class="step"><span class="step-n">3°</span><span class="step-t"><strong>Ángulo / Pendiente</strong> — media precisión (líneas, radar)</span></div>
+          <div class="step"><span class="step-n">4°</span><span class="step-t"><strong>Área</strong> — baja precisión (burbujas, treemap)</span></div>
+          <div class="step"><span class="step-n">5°</span><span class="step-t"><strong>Saturación / Color</strong> — comparación ordinal aproximada</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Paleta de Colores Auditada — Para Informes Técnicos</div>
+
+  <div class="palette-section">
+    <div class="pal-title">Paletas recomendadas para contextos de ingeniería hídrica e informes auditables</div>
+
+    <div class="pal-row">
+      <div class="pal-label">Secuencial — Azul</div>
+      <div class="pal-swatch" style="background:#083d6e"></div>
+      <div class="pal-swatch" style="background:#1565a8"></div>
+      <div class="pal-swatch" style="background:#3b8fc9"></div>
+      <div class="pal-swatch" style="background:#80c0e0"></div>
+      <div class="pal-swatch" style="background:#c5e5f2"></div>
+      <div class="pal-hex">Cuantitativos. Niveles, presiones, caudales. Intensidad = magnitud.</div>
+    </div>
+
+    <div class="pal-row">
+      <div class="pal-label">Divergente — Semáforo</div>
+      <div class="pal-swatch" style="background:#d73027"></div>
+      <div class="pal-swatch" style="background:#f46d43"></div>
+      <div class="pal-swatch" style="background:#fdae61"></div>
+      <div class="pal-swatch" style="background:#abd9e9"></div>
+      <div class="pal-swatch" style="background:#1a9850"></div>
+      <div class="pal-hex">Desviaciones del umbral. Rojo=alerta, Verde=normal. Cuidado con daltonismo: añadir forma.</div>
+    </div>
+
+    <div class="pal-row">
+      <div class="pal-label">Categórico — Tableau</div>
+      <div class="pal-swatch" style="background:#4e79a7"></div>
+      <div class="pal-swatch" style="background:#f28e2b"></div>
+      <div class="pal-swatch" style="background:#e15759"></div>
+      <div class="pal-swatch" style="background:#76b7b2"></div>
+      <div class="pal-swatch" style="background:#59a14f"></div>
+      <div class="pal-swatch" style="background:#edc948"></div>
+      <div class="pal-swatch" style="background:#b07aa1"></div>
+      <div class="pal-hex">Categorías distintas (sensores, estaciones, sectores). Hasta 8 categorías distinguibles.</div>
+    </div>
+
+    <div class="pal-row">
+      <div class="pal-label">Accesible — OKabe-Ito</div>
+      <div class="pal-swatch" style="background:#e69f00"></div>
+      <div class="pal-swatch" style="background:#56b4e9"></div>
+      <div class="pal-swatch" style="background:#009e73"></div>
+      <div class="pal-swatch" style="background:#f0e442"></div>
+      <div class="pal-swatch" style="background:#0072b2"></div>
+      <div class="pal-swatch" style="background:#d55e00"></div>
+      <div class="pal-hex">Diseñada para daltonismo. RECOMENDADA para informes públicos y presentaciones ante organismos internacionales.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Ratio Datos-Tinta — Principio de Tufte</div>
+
+  <div class="cog-grid">
+    <div class="cog-item" style="--ci-color:#47e8c5">
+      <div class="cog-title">✓ Maximizar Ratio Datos/Tinta</div>
+      <div class="cog-body">
+        Eliminar todo elemento visual que no aporte información: fondos de cuadrícula innecesarios, bordes decorativos, gradientes 3D, sombras, marcos redundantes, leyendas cuando el color ya está anotado directamente. Cada pixel debe justificar su existencia con información.
+      </div>
+    </div>
+    <div class="cog-item" style="--ci-color:#e8476b">
+      <div class="cog-title">✗ Eliminar Chartjunk</div>
+      <div class="cog-body">
+        Chartjunk: elementos visuales que añaden complejidad sin información. Ejemplos: gráficos 3D (distorsionan perspectiva), fondos de imagen, iconos decorativos en barras, escalas que no empiezan en cero sin justificación, etiquetas redundantes con lo que ya muestran los ejes.
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ CATÁLOGO GRÁFICOS ══ -->
+<section id="v4" class="vsection" style="--sc:#e8476b">
+
+  <div class="sec-header">
+    <div class="sec-num">4</div>
+    <div class="sec-info">
+      <div class="sec-label">Catálogo — 7 Categorías</div>
+      <div class="sec-title">Selección de Gráfico — Justificada por el Objetivo</div>
+      <div class="sec-desc">
+        El tipo de gráfico NO se elige por preferencia estética ni por lo que más conoce el analista. 
+        Se elige por el tipo de relación que los datos representan y la pregunta analítica que se responde. 
+        Esta es la taxonomía completa de la Guía de Visualización de Datos (Generalitat de Cataluña, 2019).
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Matriz de Selección — Objetivo → Categoría → Tipo</div>
+
+  <div class="chart-matrix">
+    <div class="cm-cell" style="--cm-color:#4e79a7">
+      <div class="cm-category">Comparaciones</div>
+      <div class="cm-types">
+        <div class="cm-type">Barras simples <span class="badge badge-ok">PREFERIDO</span></div>
+        <div class="cm-type">Barras agrupadas</div>
+        <div class="cm-type">Barras apiladas</div>
+        <div class="cm-type">Gráfico de radar</div>
+        <div class="cm-type">Intensidad de colores</div>
+        <div class="cm-type">Gráfico de marcas</div>
+        <div class="cm-type">Gráfico múltiple (facet)</div>
+      </div>
+      <div class="cm-use">Para comparar diferentes variables o categorías entre sí.</div>
+    </div>
+
+    <div class="cm-cell" style="--cm-color:#59a14f">
+      <div class="cm-category">Tendencias Temporales</div>
+      <div class="cm-types">
+        <div class="cm-type">Líneas <span class="badge badge-ok">PREFERIDO</span></div>
+        <div class="cm-type">Pendientes (slope chart)</div>
+        <div class="cm-type">Minigráfico (sparkline)</div>
+        <div class="cm-type">Área apilada</div>
+      </div>
+      <div class="cm-use">Para entender la evolución temporal de variables cuantitativas.</div>
+    </div>
+
+    <div class="cm-cell" style="--cm-color:#76b7b2">
+      <div class="cm-category">Distribuciones</div>
+      <div class="cm-types">
+        <div class="cm-type">Histograma <span class="badge badge-ok">PREFERIDO</span></div>
+        <div class="cm-type">Diagrama de caja (boxplot)</div>
+        <div class="cm-type">Densidad KDE</div>
+        <div class="cm-type">Violin plot</div>
+        <div class="cm-type">Q-Q plot (normalidad)</div>
+      </div>
+      <div class="cm-use">Para entender la forma y propiedades de una variable. Directamente conectado al EDA.</div>
+    </div>
+
+    <div class="cm-cell" style="--cm-color:#f28e2b">
+      <div class="cm-category">Correlaciones</div>
+      <div class="cm-types">
+        <div class="cm-type">Dispersión (scatter) <span class="badge badge-ok">PREFERIDO</span></div>
+        <div class="cm-type">Burbujas (3 variables)</div>
+        <div class="cm-type">Coordenadas paralelas</div>
+        <div class="cm-type">Heatmap de correlación</div>
+      </div>
+      <div class="cm-use">Para entender la relación entre variables. Verificar Pearson vs Spearman antes de afirmar correlación.</div>
+    </div>
+
+    <div class="cm-cell" style="--cm-color:#e15759">
+      <div class="cm-category">Partes de un Total</div>
+      <div class="cm-types">
+        <div class="cm-type">Barras apiladas al 100%</div>
+        <div class="cm-type">Treemap (jerarquía)</div>
+        <div class="cm-type">Pictograma</div>
+        <div class="cm-type">Gráfico circular <span class="badge badge-no">EVITAR</span></div>
+      </div>
+      <div class="cm-use">Para entender contribuciones. El gráfico circular dificulta la comparación visual precisa.</div>
+    </div>
+
+    <div class="cm-cell" style="--cm-color:#edc948">
+      <div class="cm-category">Mapas Geográficos</div>
+      <div class="cm-types">
+        <div class="cm-type">Coropletas (choropleth)</div>
+        <div class="cm-type">Símbolos proporcionales</div>
+        <div class="cm-type">Mapa de calor espacial</div>
+        <div class="cm-type">Mapa de flujo</div>
+      </div>
+      <div class="cm-use">Para encontrar patrones geográficos. En hidrología: distribución de cuencas, estaciones, presas.</div>
+    </div>
+
+    <div class="cm-cell" style="--cm-color:#b07aa1">
+      <div class="cm-category">Redes y Conexiones</div>
+      <div class="cm-types">
+        <div class="cm-type">Diagrama nodos-aristas</div>
+        <div class="cm-type">Diagrama de Sankey</div>
+        <div class="cm-type">Chord diagram</div>
+      </div>
+      <div class="cm-use">Para entender relaciones entre elementos de un conjunto. Balance hídrico, flujos de agua en sistema de riego.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Decisión Rápida — Cuándo usar cada tipo</div>
+
+  <div class="decision-matrix">
+    <div class="dm-head">⬛ Árbol de Decisión de Gráficos</div>
+    <div class="dm-head-row">
+      <div class="dm-th">Pregunta analítica</div>
+      <div class="dm-th">Datos requeridos</div>
+      <div class="dm-th">Gráfico recomendado</div>
+      <div class="dm-th">Gráfico a evitar</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Cómo evolucionó X en el tiempo?</div>
+      <div class="dm-cell">Serie temporal, variable continua</div>
+      <div class="dm-cell">Gráfico de líneas</div>
+      <div class="dm-cell">Barras, circular</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Qué distribución tienen los caudales?</div>
+      <div class="dm-cell">Variable numérica continua</div>
+      <div class="dm-cell">Histograma + KDE</div>
+      <div class="dm-cell">Barras con promedio solo</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Cómo se comparan las estaciones entre sí?</div>
+      <div class="dm-cell">Variable continua × categorías</div>
+      <div class="dm-cell">Barras horizontales ordenadas</div>
+      <div class="dm-cell">Circular, 3D</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Existe relación entre precipitación y caudal?</div>
+      <div class="dm-cell">Dos variables continuas</div>
+      <div class="dm-cell">Dispersión (scatter) + línea tendencia</div>
+      <div class="dm-cell">Líneas separadas</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Cómo están correlacionadas 10 variables?</div>
+      <div class="dm-cell">Matriz numérica n×n</div>
+      <div class="dm-cell">Heatmap de correlación</div>
+      <div class="dm-cell">Tablas de números</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Dónde están los outliers?</div>
+      <div class="dm-cell">Variable numérica, grupos</div>
+      <div class="dm-cell">Boxplot por grupo</div>
+      <div class="dm-cell">Solo promedio ± desv.</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Qué proporción representa cada fuente?</div>
+      <div class="dm-cell">Partes de un total</div>
+      <div class="dm-cell">Barras apiladas al 100%</div>
+      <div class="dm-cell">Circular (si >4 categorías)</div>
+    </div>
+    <div class="dm-row">
+      <div class="dm-cell">¿Dónde están las cuencas con mayor riesgo?</div>
+      <div class="dm-cell">Variable + coordenadas</div>
+      <div class="dm-cell">Mapa coroplético</div>
+      <div class="dm-cell">Tabla de regiones</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ PRINCIPIOS DISEÑO ══ -->
+<section id="v5" class="vsection" style="--sc:#e8a347">
+
+  <div class="sec-header">
+    <div class="sec-num">5</div>
+    <div class="sec-info">
+      <div class="sec-label">Principios — Cognitivos y Técnicos</div>
+      <div class="sec-title">Diseño que Reduce Carga Cognitiva</div>
+      <div class="sec-desc">
+        Las decisiones de diseño no son opinables cuando tienen sustento cognitivo. 
+        Estas reglas reducen el esfuerzo mental necesario para extraer el mensaje, 
+        lo que directamente aumenta la calidad de la decisión que se toma con la visualización.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Leyes de Gestalt — Aplicación Directa</div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8a347">GS1</div><div class="card-title">Proximidad</div></div>
+      <div class="card-body">Elementos cercanos son percibidos como un grupo. Agrupar visualmente los datos relacionados. No distribuir series temporales de una misma variable en lados opuestos del dashboard.</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8a347">GS2</div><div class="card-title">Semejanza</div></div>
+      <div class="card-body">Elementos con el mismo color/forma son percibidos como relacionados. Usar el mismo color para la misma serie en todas las gráficas de un informe. Nunca reutilizar colores con significados distintos.</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8a347">GS3</div><div class="card-title">Continuidad</div></div>
+      <div class="card-body">Los ojos siguen líneas y curvas. Las líneas temporales deben ser continuas y sin saltos artificiales. Si hay datos faltantes, distinguirlos con línea punteada, no eliminarlos silenciosamente.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Checklist de Finalización — Antes de Entregar</div>
+
+  <div class="ok-grid">
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Base cero obligatoria en barras.</strong> Una barra que no empieza en 0 distorsiona la comparación de magnitudes. Solo omitir con justificación explícita y anotación en el gráfico.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Título afirmativo, no descriptivo.</strong> "Evolución del Caudal 2020-2024" es descriptivo. "El caudal de filtración incrementó 35% tras las lluvias de octubre" es afirmativo y accionable.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Unidades en ejes.</strong> Sin excepción. En informes ITRB/ICOLD: sistema métrico SI. Especificar si es valor puntual o acumulado.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Anotar el umbral de alerta.</strong> En visualizaciones de seguridad de presas, la línea de umbral GISTM debe ser visible y etiquetada en toda gráfica de monitoreo.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Fuente y fecha de datos.</strong> Dataset version + fecha de corte en el pie de cada gráfica de informe técnico.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Escala logarítmica explícita.</strong> Si se usa escala log (caudales, precipitación), etiquetarlo en el eje y añadir nota explicativa para audiencias no técnicas.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Valores imputados distinguibles.</strong> Puntos huecos o línea punteada para valores que provienen de imputación MICE/KNN. Nunca ocultar el tratamiento de missingness en la visualización final.</div></div>
+    <div class="ok-item"><span class="ok-check">✓</span><div class="ok-body"><strong>Accesibilidad de color.</strong> Verificar con herramienta de simulación de daltonismo (Coblis, Viz Palette). Añadir forma o textura como atributo redundante junto al color en gráficos de seguridad.</div></div>
+  </div>
+
+</section>
+
+<!-- ══ STORYTELLING ══ -->
+<section id="v6" class="vsection" style="--sc:#e8c547">
+
+  <div class="sec-header">
+    <div class="sec-num">6</div>
+    <div class="sec-info">
+      <div class="sec-label">Storytelling — Estructura Narrativa</div>
+      <div class="sec-title">La Historia que Mueve a la Acción</div>
+      <div class="sec-desc">
+        Los hechos aislados no convencen. Las historias sí. 
+        El storytelling con datos no es ficción: es el arte de estructurar evidencia real 
+        en una narrativa que el cerebro humano pueda procesar, recordar y actuar. 
+        En el contexto de infraestructura crítica, una buena narrativa puede ser 
+        la diferencia entre una decisión tomada a tiempo o demasiado tarde.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Estructura de 3 Actos — Aplicada a Datos</div>
+
+  <div class="story-arc">
+    <div class="arc-act" style="--ac-color:#47b8e8">
+      <div class="arc-num">I</div>
+      <div class="arc-act-label">Acto 1 — Planteamiento</div>
+      <div class="arc-act-title">Contexto & Tensión</div>
+      <div class="arc-act-desc">
+        Establece el escenario. ¿Cuál es la situación actual? ¿Qué se esperaba y qué está pasando diferente? El protagonista siempre es la audiencia, no el analista.
+        <br><br>
+        <strong>Elementos:</strong> Estado baseline, período de análisis, expectativa vs. realidad observada.
+        <br><br>
+        <strong>Gráfico típico:</strong> Serie temporal con línea de referencia histórica.
+      </div>
+    </div>
+    <div class="arc-arrow">→</div>
+    <div class="arc-act" style="--ac-color:#e8c547">
+      <div class="arc-num">II</div>
+      <div class="arc-act-label">Acto 2 — Desarrollo</div>
+      <div class="arc-act-title">El Conflicto con Evidencia</div>
+      <div class="arc-act-desc">
+        Desarrolla el conflicto: "lo que es" vs. "lo que debería ser". Introduce los datos que demuestran la necesidad de cambio. Es el núcleo analítico de toda la presentación.
+        <br><br>
+        <strong>Elementos:</strong> Hallazgos del EDA, outliers etiquetados, correlaciones clave, señales de alerta.
+        <br><br>
+        <strong>Gráfico típico:</strong> Boxplot comparativo, heatmap de correlación, scatter con anomalías marcadas.
+      </div>
+    </div>
+    <div class="arc-arrow">→</div>
+    <div class="arc-act" style="--ac-color:#47e8c5">
+      <div class="arc-num">III</div>
+      <div class="arc-act-label">Acto 3 — Desenlace</div>
+      <div class="arc-act-title">Llamada a la Acción</div>
+      <div class="arc-act-desc">
+        Termina con una acción clara, urgente y específica. No con conclusiones vagas. El decisor debe saber exactamente qué hacer después de ver la presentación.
+        <br><br>
+        <strong>Elementos:</strong> Recomendación específica, responsable, plazo, métrica de seguimiento.
+        <br><br>
+        <strong>Gráfico típico:</strong> Dashboard de monitoreo forward-looking o mapa de riesgo priorizado.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Tácticas de Claridad Narrativa</div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8c547">BBC</div><div class="card-title">Bing, Bang, Bongo</div></div>
+      <div class="card-body">
+        Introducción → Desarrollo → Recapitulación. El mensaje central debe aparecer tres veces en formatos distintos: verbal en la introducción, visual en el desarrollo, y resumido en la conclusión. Esto asegura que se cimente en la memoria a largo plazo.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8c547">LH</div><div class="card-title">Lógica Horizontal</div></div>
+      <div class="card-body">
+        Los títulos de las diapositivas deben contar la historia completa por sí solos. Si alguien lee solo los títulos, debe entender el mensaje sin ver ningún gráfico. Esta es la prueba definitiva de coherencia narrativa.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8c547">TX</div><div class="card-title">El Rol del Texto</div></div>
+      <div class="card-body">
+        Las palabras no son enemigos de los gráficos: son su complemento. Usar texto para anotar puntos críticos, dar contexto emocional y eliminar dudas interpretativas. Una flecha con "UMBRAL GISTM SUPERADO" vale más que una línea roja sin etiqueta.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-icon" style="color:#e8c547">ZF</div><div class="card-title">Zoom & Filtro (Shneiderman)</div></div>
+      <div class="card-body">
+        Mantra de la búsqueda visual: "Mostrar perspectiva general → hacer zoom → proporcionar detalles bajo demanda." Para dashboards de monitoreo: vista general de todos los sensores → zoom a la zona de alerta → detalle técnico del sensor específico.
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-ok">
+    <span class="alert-icon">★</span>
+    <div class="alert-body">
+      <strong>Regla de oro del storytelling técnico:</strong> El decisor no debe tener que adivinar 
+      qué significa el gráfico ni qué acción implica. Si necesita preguntar "¿y esto qué significa?", 
+      el storytelling ha fallado, no el decisor. La carga de la claridad es siempre del analista.
+    </div>
+  </div>
+
+</section>
+
+<!-- ══ ANTI-PATRONES ══ -->
+<section id="v7" class="vsection" style="--sc:#e8475a">
+
+  <div class="sec-header">
+    <div class="sec-num">7</div>
+    <div class="sec-info">
+      <div class="sec-label">Anti-Patrones de Visualización</div>
+      <div class="sec-title">Lo que Distorsiona, Confunde o Engaña</div>
+      <div class="sec-desc">
+        Un gráfico mal diseñado puede llevar a una decisión incorrecta con la misma confianza 
+        que un gráfico correcto lleva a una buena decisión. En infraestructura crítica, 
+        esto no es un error estético: es un riesgo operacional.
+      </div>
+    </div>
+  </div>
+
+  <div class="anti-grid">
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Gráfico circular con más de 4 categorías.</strong> El cerebro no puede comparar ángulos con precisión. Usar barras horizontales ordenadas de mayor a menor.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Eje Y que no empieza en cero en barras.</strong> Distorsiona visualmente las diferencias de magnitud. Solo omitir con nota explícita y razón técnica justificada.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Gráficos 3D.</strong> La perspectiva falsea los valores. Una barra detrás de otra parece más pequeña aunque tenga el mismo valor. Prohibido en informes técnicos auditables.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Doble eje Y sin advertencia.</strong> Dos ejes con escalas diferentes pueden hacer parecer que dos variables sin relación siguen el mismo patrón. Siempre justificar y anotar las escalas claramente.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Mostrar solo el promedio, ocultar la distribución.</strong> En series hidrológicas, el promedio sin boxplot o bandas de confianza oculta la variabilidad y los eventos extremos que más importan.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Rojo+verde sin distinción de forma.</strong> 5-10% de la población masculina tiene daltonismo rojo-verde. Añadir siempre una forma (círculo vs. triángulo) como atributo redundante en gráficos de alerta.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Truncar la serie temporal sin avisar.</strong> Mostrar solo los últimos 3 meses de una serie de 10 años sin indicarlo puede hacer que una tendencia estacional parezca un cambio estructural.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Valores imputados sin distinguir.</strong> Presentar datos imputados por MICE/KNN con el mismo símbolo que los observados oculta la incertidumbre del análisis. Obligatorio distinguirlos visualmente.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Más de 9 colores en la leyenda.</strong> La memoria de trabajo del ser humano procesa entre 5 y 9 elementos. Una leyenda con 15 colores no puede ser decodificada eficientemente. Agrupar categorías.</div></div>
+    <div class="anti-item"><span class="anti-x">❌</span><div class="anti-body"><strong>Títulos descriptivos en lugar de afirmativos.</strong> "Figura 4. Nivel piezométrico 2020-2024" no transmite nada. "El nivel piezométrico del Sector A supera el umbral de alerta desde octubre 2024" sí lo hace.</div></div>
+  </div>
+
+</section>
+
+<!-- ══ CÓDIGO ══ -->
+<section id="v8" class="vsection" style="--sc:#47b8e8">
+
+  <div class="sec-header">
+    <div class="sec-num">8</div>
+    <div class="sec-info">
+      <div class="sec-label">Implementación — Python</div>
+      <div class="sec-title">Código de Visualización Auditado</div>
+      <div class="sec-desc">
+        Código base reproducible para los tipos de visualización más usados en ingeniería hídrica 
+        y análisis de infraestructura. Todos los gráficos incluyen trazabilidad de fuente, 
+        manejo de umbrales de alerta y distinción de valores imputados.
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-hd">
+      <span class="code-lang">Python — Setup y Función de Trazabilidad</span>
+      <span class="code-note">Encabezado obligatorio de toda sesión de visualización</span>
+    </div>
+    <div class="code-bd">
+<pre><span class="c-c"># ═══════════════════════════════════════════════════════════════
+# PIPELINE VIZ v1.0 — Módulo de Visualización & Storytelling
+# Conectado a: Pipeline Data Discovery v3.0
+# Ref: Guía Visualización Datos (Generalitat Cataluña, 2019)
+#      Knaflic (2015) — Storytelling with Data
+# ═══════════════════════════════════════════════════════════════</span>
+
+<span class="c-i">import</span> matplotlib.pyplot <span class="c-k">as</span> plt
+<span class="c-i">import</span> matplotlib.ticker <span class="c-k">as</span> mticker
+<span class="c-i">import</span> seaborn <span class="c-k">as</span> sns
+<span class="c-i">import</span> plotly.graph_objects <span class="c-k">as</span> go
+<span class="c-i">import</span> plotly.express <span class="c-k">as</span> px
+<span class="c-i">import</span> pandas <span class="c-k">as</span> pd
+<span class="c-i">import</span> numpy <span class="c-k">as</span> np
+
+<span class="c-c"># Tema base — minimalista, tinta proporcional (Tufte)</span>
+plt.rcParams.update({
+    <span class="c-s">'figure.facecolor'</span>: <span class="c-s">'white'</span>,
+    <span class="c-s">'axes.facecolor'</span>:   <span class="c-s">'white'</span>,
+    <span class="c-s">'axes.spines.top'</span>:  <span class="c-k">False</span>,
+    <span class="c-s">'axes.spines.right'</span>: <span class="c-k">False</span>,
+    <span class="c-s">'axes.grid'</span>:         <span class="c-k">True</span>,
+    <span class="c-s">'grid.color'</span>:        <span class="c-s">'#e8e8e8'</span>,
+    <span class="c-s">'grid.linewidth'</span>:    <span class="c-n">0.5</span>,
+    <span class="c-s">'font.family'</span>:       <span class="c-s">'DejaVu Sans'</span>,
+    <span class="c-s">'font.size'</span>:         <span class="c-n">11</span>,
+    <span class="c-s">'axes.titlesize'</span>:    <span class="c-n">13</span>,
+    <span class="c-s">'axes.titleweight'</span>:  <span class="c-s">'bold'</span>,
+    <span class="c-s">'axes.labelsize'</span>:    <span class="c-n">11</span>,
+})
+
+<span class="c-c"># Paleta OKabe-Ito — accesible para daltonismo</span>
+<span class="c-v">PALETA_ACCESIBLE</span> = [<span class="c-s">'#0072b2'</span>, <span class="c-s">'#e69f00'</span>, <span class="c-s">'#009e73'</span>,
+                     <span class="c-s">'#d55e00'</span>, <span class="c-s">'#56b4e9'</span>, <span class="c-s">'#f0e442'</span>]
+
+<span class="c-k">def</span> <span class="c-f">pie_trazabilidad</span>(ax, dataset_version: str, completitud_pct: float,
+                      fecha_corte: str) -> <span class="c-k">None</span>:
+    <span class="c-s">"""
+    Añade metadato de trazabilidad al pie del gráfico.
+    Obligatorio para informes auditables ITRB/ISO 9001.
+    """</span>
+    ax.annotate(
+        <span class="c-s">f"Fuente: {dataset_version} | Corte: {fecha_corte} | Completitud: {completitud_pct:.1f}%"</span>,
+        xy=(<span class="c-n">0</span>, <span class="c-n">-0.12</span>), xycoords=<span class="c-s">'axes fraction'</span>,
+        fontsize=<span class="c-n">8</span>, color=<span class="c-s">'#888888'</span>, style=<span class="c-s">'italic'</span>
+    )</pre>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-hd">
+      <span class="code-lang">Python — Serie Temporal con Umbral de Alerta</span>
+      <span class="code-note">Monitoreo de seguridad de presas — GISTM compliant</span>
+    </div>
+    <div class="code-bd">
+<pre><span class="c-k">def</span> <span class="c-f">plot_serie_monitoreo</span>(df: pd.DataFrame, col: str, col_flag_imputado: str,
+                          umbral_alerta: float, titulo: str,
+                          dataset_version: str, completitud: float) -> plt.Figure:
+    <span class="c-s">"""
+    Serie temporal de monitoreo con:
+      - Umbral de alerta GISTM etiquetado
+      - Distinción visual de valores imputados
+      - Trazabilidad en pie de gráfico
+      - Título afirmativo (no descriptivo)
+    """</span>
+    fig, ax = plt.subplots(figsize=(<span class="c-n">14</span>, <span class="c-n">5</span>))
+
+    <span class="c-c"># Separar observados vs imputados</span>
+    <span class="c-v">mask_obs</span>  = df[col_flag_imputado] == <span class="c-n">0</span>
+    <span class="c-v">mask_imp</span>  = df[col_flag_imputado] == <span class="c-n">1</span>
+
+    <span class="c-c"># Valores observados — línea sólida</span>
+    ax.plot(df.index[<span class="c-v">mask_obs</span>], df[col][<span class="c-v">mask_obs</span>],
+            color=<span class="c-s">'#0072b2'</span>, linewidth=<span class="c-n">1.5</span>, label=<span class="c-s">'Observado'</span>, zorder=<span class="c-n">3</span>)
+
+    <span class="c-c"># Valores imputados — línea punteada + símbolo hueco (anti-patrón evitado)</span>
+    ax.plot(df.index[<span class="c-v">mask_imp</span>], df[col][<span class="c-v">mask_imp</span>],
+            color=<span class="c-s">'#0072b2'</span>, linewidth=<span class="c-n">1.0</span>, linestyle=<span class="c-s">'--'</span>,
+            alpha=<span class="c-n">0.6</span>, label=<span class="c-s">'Imputado (MICE)'</span>, zorder=<span class="c-n">2</span>)
+
+    <span class="c-c"># Umbral de alerta — etiquetado explícito (GISTM §7)</span>
+    ax.axhline(y=umbral_alerta, color=<span class="c-s">'#d55e00'</span>, linewidth=<span class="c-n">1.5</span>,
+               linestyle=<span class="c-s">'-.'</span>, zorder=<span class="c-n">4</span>)
+    ax.text(df.index[-<span class="c-n">1</span>], umbral_alerta + <span class="c-n">0.3</span>,
+            <span class="c-s">'UMBRAL ALERTA GISTM'</span>, color=<span class="c-s">'#d55e00'</span>,
+            fontsize=<span class="c-n">9</span>, fontweight=<span class="c-s">'bold'</span>, ha=<span class="c-s">'right'</span>)
+
+    <span class="c-c"># Zona de alerta — banda sombreada</span>
+    ax.fill_between(df.index, umbral_alerta, df[col].max() * <span class="c-n">1.05</span>,
+                    alpha=<span class="c-n">0.05</span>, color=<span class="c-s">'#d55e00'</span>)
+
+    <span class="c-c"># Título afirmativo — no descriptivo</span>
+    ax.set_title(titulo, pad=<span class="c-n">12</span>)
+    ax.set_ylabel(<span class="c-s">f'{col} (unidad SI)'</span>)
+    ax.legend(loc=<span class="c-s">'upper left'</span>, framealpha=<span class="c-n">0.9</span>)
+    ax.xaxis.set_major_formatter(
+        mticker.FuncFormatter(<span class="c-k">lambda</span> x, _: pd.Timestamp(x).strftime(<span class="c-s">'%Y-%m'</span>))
+    )
+
+    <span class="c-c"># Trazabilidad obligatoria — ISO 9001</span>
+    pie_trazabilidad(ax, dataset_version, completitud,
+                     str(df.index.max().date()))
+    plt.tight_layout()
+    <span class="c-k">return</span> fig</pre>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-hd">
+      <span class="code-lang">Python — Histograma con Prueba de Normalidad</span>
+      <span class="code-note">EDA → Viz · Conectado a Fase 1 del Pipeline v3.0</span>
+    </div>
+    <div class="code-bd">
+<pre><span class="c-k">def</span> <span class="c-f">plot_distribucion_eda</span>(serie: pd.Series, nombre_var: str,
+                           dataset_version: str) -> plt.Figure:
+    <span class="c-s">"""
+    Histograma + KDE + Q-Q plot + estadísticos clave.
+    Visualización estándar de distribución post-EDA.
+    """</span>
+    <span class="c-i">from</span> scipy <span class="c-i">import</span> stats
+
+    fig, axes = plt.subplots(<span class="c-n">1</span>, <span class="c-n">3</span>, figsize=(<span class="c-n">16</span>, <span class="c-n">5</span>))
+
+    <span class="c-c"># Panel 1: Histograma + KDE</span>
+    <span class="c-v">ax1</span> = axes[<span class="c-n">0</span>]
+    <span class="c-v">n_bins</span> = <span class="c-n">1</span> + int(np.log2(len(serie.dropna())))  <span class="c-c"># Sturges</span>
+    serie.hist(ax=<span class="c-v">ax1</span>, bins=<span class="c-v">n_bins</span>, color=<span class="c-s">'#0072b2'</span>, alpha=<span class="c-n">0.7</span>, density=<span class="c-k">True</span>)
+    serie.plot.kde(ax=<span class="c-v">ax1</span>, color=<span class="c-s">'#d55e00'</span>, linewidth=<span class="c-n">2</span>)
+    <span class="c-v">ax1</span>.set_title(<span class="c-s">f'Distribución — {nombre_var}'</span>)
+    <span class="c-v">ax1</span>.set_xlabel(nombre_var)
+
+    <span class="c-c"># Panel 2: Boxplot con swarm para outliers visibles</span>
+    <span class="c-v">ax2</span> = axes[<span class="c-n">1</span>]
+    <span class="c-v">ax2</span>.boxplot(serie.dropna(), vert=<span class="c-k">True</span>, patch_artist=<span class="c-k">True</span>,
+               boxprops=dict(facecolor=<span class="c-s">'#0072b2'</span>, alpha=<span class="c-n">0.4</span>),
+               medianprops=dict(color=<span class="c-s">'#d55e00'</span>, linewidth=<span class="c-n">2</span>),
+               flierprops=dict(marker=<span class="c-s">'o'</span>, markerfacecolor=<span class="c-s">'none'</span>,
+                               markeredgecolor=<span class="c-s">'#d55e00'</span>))
+    <span class="c-v">ax2</span>.set_title(<span class="c-s">'Boxplot — Outliers visibles'</span>)
+
+    <span class="c-c"># Panel 3: Q-Q Plot — prueba visual de normalidad</span>
+    <span class="c-v">ax3</span> = axes[<span class="c-n">2</span>]
+    stats.probplot(serie.dropna(), dist=<span class="c-s">'norm'</span>, plot=<span class="c-v">ax3</span>)
+    <span class="c-v">ax3</span>.get_lines()[<span class="c-n">0</span>].set(color=<span class="c-s">'#0072b2'</span>, markersize=<span class="c-n">3</span>)
+    <span class="c-v">ax3</span>.get_lines()[<span class="c-n">1</span>].set(color=<span class="c-s">'#d55e00'</span>)
+
+    <span class="c-c"># Estadísticos en el título global</span>
+    <span class="c-v">skew</span> = serie.skew()
+    _, p_sw = stats.shapiro(serie.dropna().sample(min(<span class="c-n">5000</span>, len(serie.dropna()))))
+    <span class="c-v">normal</span> = <span class="c-s">'Normal ✓'</span> <span class="c-k">if</span> p_sw > <span class="c-n">0.05</span> <span class="c-k">else</span> <span class="c-s">'No Normal ✗'</span>
+    fig.suptitle(
+        <span class="c-s">f'{nombre_var} · Skewness={skew:.2f} · Shapiro-Wilk: {normal} (p={p_sw:.4f})'</span>,
+        fontsize=<span class="c-n">13</span>, fontweight=<span class="c-s">'bold'</span>
+    )
+    pie_trazabilidad(axes[<span class="c-n">0</span>], dataset_version, <span class="c-n">100</span>*(serie.notna().mean()), <span class="c-s">'—'</span>)
+    plt.tight_layout()
+    <span class="c-k">return</span> fig</pre>
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-left">
+    Pipeline Viz & Storytelling <span>v1.0</span> · Complementario a Pipeline Data Discovery <span>v3.0</span><br>
+    Fuentes: Guía Viz Datos (Generalitat Cataluña, 2019) · Knaflic (2015) · Tufte (1983) · Shneiderman (1996)
+  </div>
+  <div class="ft-right">
+    Última actualización: 2025-03-21<br>
+    Auditabilidad: ISO 25012 · CRISP-DM · ITRB · GISTM
+  </div>
+</footer>
+
+<script>
+  function showV(id, tab) {
+    document.querySelectorAll('.vsection').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.vtab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    tab.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
